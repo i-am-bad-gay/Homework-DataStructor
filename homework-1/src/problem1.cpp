@@ -21,9 +21,9 @@ long long non(int a,int b)
             res = (long long)pow(2, res);  
         }
         return res - 3;
-    }
-	
+    }else return -1;	
 }
+
 int main()
 {
 	long long a,b;
