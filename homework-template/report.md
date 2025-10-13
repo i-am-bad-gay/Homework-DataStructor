@@ -124,4 +124,20 @@ $ ./sigma
 
 1. **程式邏可讀性變差**  
    因為是把那些條件直接變成公式，所以直接閱讀代碼是無法理解在幹嘛。
+   ```cpp
+	long long non(int a,int b)
+	{
+		if(a==0)return b+1;
+		if(a==1)return b+2;
+		if(a==2)return 2*b+3;
+		if(a==3)return pow(2,b+3)-3;
+		if(a==4) {  // 2↑↑(n+3)-3 
+	        long long res = 2;
+	        for(int i = 1; i < b+3; i++) {
+	            res = (long long)pow(2, res);  
+	        }
+	        return res - 3;
+	    }
+	}
+   ```
 
