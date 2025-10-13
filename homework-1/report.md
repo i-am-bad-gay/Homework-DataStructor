@@ -9,8 +9,9 @@
 ### 解題策略
 
 1. 遞迴很簡單，只要照著他給的條件遞迴就行
-2. 非遞迴就難上很多，我後來想了很久，想說既然是函數那一定會有規律
+2. 非遞迴就難上很多，我後來想了很久，想說既然是函數那一定會有規律，
    所以就有了以下的公式。
+
 3. 主程式呼叫計算的函式，並輸出計算結果。
 
 ## 程式實作
@@ -82,18 +83,30 @@ int main()
 
 | 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
 |----------|--------------|----------|----------|
-| 測試一   | $n = 0$      | 0        | 0        |
-| 測試二   | $n = 1$      | 1        | 1        |
-| 測試三   | $n = 3$      | 6        | 6        |
-| 測試四   | $n = 5$      | 15       | 15       |
-| 測試五   | $n = -1$     | 異常拋出 | 異常拋出 |
+| 測試一   | $n = (1,1)$      | 3        | 3        |
+| 測試二   | $n = (2,1)$      | 5        | 5        |
+| 測試三   | $n = (4,0)$      | 13       | 13       |
+| 測試四   | $n = (3,5)$      | 253      | 253       |
+| 測試五   | $n = (4,1)$      | 異常 | 異常 |
 
 ### 編譯與執行指令
 
 ```shell
-$ g++ -std=c++17 -o sigma sigma.cpp
-$ ./sigma
-6
+PS D:\Homework-DataStructor> ^C
+PS D:\Homework-DataStructor>
+PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.28.1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-rculw2xu.pll' '--stdout=Microsoft-MIEngine-Out-xwlwadxx.ftk' '--stderr=Microsoft-MIEngine-Error-erf4cd4e.0d1' '--pid=Microsoft-MIEngine-Pid-qxcrkkin.iyo' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
+1 1
+Recursive: 3
+Non-Recursive: 3
+2 1
+Recursive: 5
+Non-Recursive: 5
+4 0
+Recursive: 13
+Non-Recursive: 13
+3 5
+Recursive: 253
+Non-Recursive: 253
 ```
 
 ### 結論
@@ -118,16 +131,16 @@ $ ./sigma
    ```cpp
   	long long Acker(int a,int b)
 	{
-	if(a==0) return b+1;
-	else if(b==0) return Acker(a-1,1);
-	else return Acker(a-1,Acker(a,b-1));
+		if(a==0) return b+1;
+		else if(b==0) return Acker(a-1,1);
+		else return Acker(a-1,Acker(a,b-1));
 	}
    ```
 在本程式中，使用遞迴來計算阿卡曼和的缺點如下：.
 
 1. **程式運行速度慢**  
    遞迴並不像迴圈一樣再跑一次那麼簡單，而是要存著這段再開一個functioin，
-   這樣就會很消耗空間跟時間。
+   在需要遞迴很多次的情況下，就會很消耗空間跟時間。
 
    
 ### 選擇非遞迴(公式解)的優點和缺點
@@ -136,6 +149,12 @@ $ ./sigma
 
 1. **程式邏輯運行速度快非常多**  
    因為只要直接計算然後就返回數值，所以執行速度快上超級多。
+
+2. **程式需要的空間也少很多**  
+   公式解只要用到少數必要的變數就好，不像遞迴要存很多東西。
+
+3. **程式拓展性**  
+   假如真的要計算(4,1)的值，這個方法稍微改一下就可以用了。
 
 在本程式中，使用非遞迴(公式解)來計算阿卡曼和的缺點如下：
 
