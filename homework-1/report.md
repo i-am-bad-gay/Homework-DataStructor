@@ -92,19 +92,19 @@ int main()
 ### 編譯與執行指令
 
 ```shell
-PS D:\Homework-DataStructor> ^C
-PS D:\Homework-DataStructor>
-PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.28.1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-rculw2xu.pll' '--stdout=Microsoft-MIEngine-Out-xwlwadxx.ftk' '--stderr=Microsoft-MIEngine-Error-erf4cd4e.0d1' '--pid=Microsoft-MIEngine-Pid-qxcrkkin.iyo' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
-1 1
+$PS D:\Homework-DataStructor> ^C
+$PS D:\Homework-DataStructor>
+$PS D:\Homework-DataStructor>  & 'c:\Users\huang\.$vscode\extensions\ms-vscode.cpptools-1.28.$1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' $'--stdin=Microsoft-MIEngine-In-rculw2xu.pll' $'--stdout=Microsoft-MIEngine-Out-xwlwadxx.ftk' $'--stderr=Microsoft-MIEngine-Error-erf4cd4e.0d1' $'--pid=Microsoft-MIEngine-Pid-qxcrkkin.iyo' '--dbgExe=D:\mingw64\bin\gdb.$exe' '--interpreter=mi'
+$ 1 1
 Recursive: 3
 Non-Recursive: 3
-2 1
+$ 2 1
 Recursive: 5
 Non-Recursive: 5
-4 0
+$ 4 0
 Recursive: 13
 Non-Recursive: 13
-3 5
+$ 3 5
 Recursive: 253
 Non-Recursive: 253
 ```
@@ -185,8 +185,8 @@ Non-Recursive: 253
 
 ### 解題策略
 
-1. 
-2. 
+1. 把每一個子集合都當成岔路，先走到路的底端之後再到岔路口，再從岔路口出發
+
 
 
 ## 程式實作
@@ -226,8 +226,10 @@ int main()
     getline(cin, input); 
     string a;
 
-    for (char c : input) {  
-        if (c != ',') {      
+    for (char c : input)  //分割逗號
+    {  
+        if (c != ',')  
+        {      
             a += c;
         }
     }
@@ -251,29 +253,39 @@ int main()
 |----------|--------------|----------|----------|
 | 測試一   | $a,b,c  $    | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)       | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)        |
 | 測試二   | $e,g,1  $     | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        |
-| 測試三   | $aaa,bb,cc  $        | 13       | 13       |
+| 測試三   | $aaa,bb,cc  $        | (),(aaa),(bb),(cc),(aaa,bb),(aaa,cc),(bb,cc),(aaa,bb,cc)       | (),(c),(c),(c,c),(b),(b,c),(b,c),(b,c,c),(b),(b,c),(b,c),(b,c,c),(b,b),(b,b,c),(b,b,c),(b,b,c,c),(a),(a,c),(a,c),(a,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b,b),(a,b,b,c),(a,b,b,c),(a,b,b,c,c),(a),(a,c),(a,c),(a,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b,b),(a,b,b,c),(a,b,b,c),(a,b,b,c,c),(a,a),(a,a,c),(a,a,c),(a,a,c,c),(a,a,b),(a,a,b,c),(a,a,b,c),(a,a,b,c,c),(a,a,b),(a,a,b,c),(a,a,b,c),(a,a,b,c,c),(a,a,b,b),(a,a,b,b,c),(a,a,b,b,c),(a,a,b,b,c,c),(a),(a,c),(a,c).......... }       |
 
 
 
 ### 編譯與執行指令
 
 ```shell
-PS D:\Homework-DataStructor> ^C
-PS D:\Homework-DataStructor>
-PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.28.1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-ogjpaxud.kws' '--stdout=Microsoft-MIEngine-Out-1v2f4epm.xdu' '--stderr=Microsoft-MIEngine-Error-wkzhdsg4.35t' '--pid=Microsoft-MIEngine-Pid-dtcabuh4.rbk' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
-a,b,c
+$PS D:\Homework-DataStructor> ^C
+$PS D:\Homework-DataStructor>
+$PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.$'--stdin=Microsoft-MIEngine-In-ogjpaxud.kws' $'--stdout=Microsoft-MIEngine-Out-1v2f4epm.xdu' $'--stderr=Microsoft-MIEngine-Error-wkzhdsg4.35t' $'--pid=Microsoft-MIEngine-Pid-dtcabuh4.rbk' '--dbgExe=D:\mingw64\bin\gdb.$exe' '--interpreter=mi'
+$a,b,c
 powerSet={ (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c), }
 ```
 
 ### 結論
 
-1.  
-
+1. 這樣寫程式能正確的計算只有單個字元的子集合 。  
+2. 但在element字元有>1的情況下，這個方法就不適用了。  
 
 ## 申論及開發報告
 
 ### 選擇遞迴的優點和缺點
 
-在本程式中，使用遞迴來計算阿卡曼和的優點如下：
+在本程式中，使用遞迴的優點如下：
 
-1. **程式邏輯簡單直觀**  
+1. **程式邏輯簡單化**  
+   相比於其他解法，遞迴更能簡單明瞭的寫出來，只寫出想選或不選的決策樹就好。 
+
+1. **易於理解**
+    比起迴圈或其他寫法，程式比較短，也蠻好理解的，容易看懂。 
+
+
+在本程式中，使用遞迴的缺點如下：.
+
+1. **遞迴的限制**  
+   當element大於一定的數量的時候，就沒辦法用遞迴了。
