@@ -1,6 +1,6 @@
 # 41343139
 
-作業一
+作業一 problem1
 
 ## 解題說明
 
@@ -177,3 +177,103 @@ Non-Recursive: 253
 	}
    ```
 
+作業一 problem2
+
+## 解題說明
+
+
+
+### 解題策略
+
+1. 
+2. 
+
+
+## 程式實作
+
+以下為主要程式碼：
+
+```cpp
+#include <iostream>
+using namespace std;
+
+void powerSet(string s, int i, string c)
+{
+    
+    if (i == s.size())  //走到底就執行 沒到底就繼續往下繼續走
+    {
+        cout << "(";
+        for (int i = 0; i < c.size(); i++)
+        {
+            cout << c[i];
+            if (i != c.size() - 1)
+                cout << ",";
+        }
+        cout << "),";
+        return;
+    }
+
+    powerSet(s, i + 1, c);  //一直往下走 順便讓 i 記錄往下走了幾次 
+
+    c+= s[i];  //走到底之後 回來 選擇一個字元
+    powerSet(s, i+1, c); //帶著字元走到底
+}
+
+
+int main()
+{
+    string input;
+    getline(cin, input); 
+    string a;
+
+    for (char c : input) {  
+        if (c != ',') {      
+            a += c;
+        }
+    }
+
+    cout<<"powerSet={ ";
+    powerSet(a,0,"");
+    
+    cout << " }";
+}
+```
+
+## 效能分析
+時間複雜度:O(2^n)
+空間複雜度:O(n)
+
+## 測試與驗證
+
+### 測試案例
+
+| 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
+|----------|--------------|----------|----------|
+| 測試一   | $a,b,c  $    | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)       | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)        |
+| 測試二   | $e,g,1  $     | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        |
+| 測試三   | $aaa,bb,cc  $        | 13       | 13       |
+
+
+
+### 編譯與執行指令
+
+```shell
+PS D:\Homework-DataStructor> ^C
+PS D:\Homework-DataStructor>
+PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.28.1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-ogjpaxud.kws' '--stdout=Microsoft-MIEngine-Out-1v2f4epm.xdu' '--stderr=Microsoft-MIEngine-Error-wkzhdsg4.35t' '--pid=Microsoft-MIEngine-Pid-dtcabuh4.rbk' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
+a,b,c
+powerSet={ (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c), }
+```
+
+### 結論
+
+1.  
+
+
+## 申論及開發報告
+
+### 選擇遞迴的優點和缺點
+
+在本程式中，使用遞迴來計算阿卡曼和的優點如下：
+
+1. **程式邏輯簡單直觀**  
