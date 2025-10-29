@@ -4,14 +4,12 @@
 
 ## 解題說明
 
-實作阿卡曼函數，使用遞迴和非遞迴解題
+實作多項式，使用Class來實現多種功能
 
 ### 解題策略
 
-1. 遞迴很簡單，只要照著他給的條件遞迴就行
-2. 非遞迴就難上很多，我後來想了很久，想說既然是函數那一定會有規律，
-   所以就有了以下的公式。
-
+1. 
+2. 
 3. 主程式呼叫計算的函式，並輸出計算結果。
 
 ## 程式實作
@@ -19,41 +17,7 @@
 以下為主要程式碼：
 
 ```cpp
-#include <iostream>
-#include <cmath>
-using namespace std;
 
-long long Acker(int a,int b)
-{
-	if(a==0) return b+1;
-	else if(b==0) return Acker(a-1,1);
-	else return Acker(a-1,Acker(a,b-1));
-}
-
-long long non(int a,int b)
-{
-	if(a==0)return b+1;
-	if(a==1)return b+2;
-	if(a==2)return 2*b+3;
-	if(a==3)return pow(2,b+3)-3;
-	if(a==4) {  // 2↑↑(n+3)-3 
-        long long res = 2;
-        for(int i = 1; i < b+3; i++) {
-            res = (long long)pow(2, res);  
-        }
-        return res - 3;
-    }
-}
-
-int main()
-{
-	long long a,b;
-    while(cin>>a>>b)
-    {
-		cout<<"Recursive: "<<Acker(a,b)<<endl;
-		cout<<"Non-Recursive: "<<non(a,b)<<endl;
-	} 
-}
 ```
 
 ## 遞迴效能分析
