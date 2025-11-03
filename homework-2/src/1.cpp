@@ -89,7 +89,7 @@ void Polynomial::newTerm (const float theCoef, const int theExp) {
 }
 
 
-Polynomial Polynomial::Add(Polynomial b){
+Polynomial Polynomial::Add(const Polynomial b){
     Polynomial c;
     int aPos=0,bPos=0;
     while((aPos<terms)&&(bPos<b.terms)){
@@ -113,7 +113,7 @@ Polynomial Polynomial::Add(Polynomial b){
 	return c;
 }
 
-Polynomial Polynomial::Mult(Polynomial b){
+Polynomial Polynomial::Mult(const Polynomial b){
     Polynomial c;
 
 	for(int i=0;i<terms;i++)
