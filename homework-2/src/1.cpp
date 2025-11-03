@@ -116,14 +116,14 @@ Polynomial Polynomial::Add(Polynomial b){
 Polynomial Polynomial::Mult(Polynomial b){
     Polynomial c;
 
-	for(int i=0;i<b.terms;i++)
+	for(int i=0;i<terms;i++)
 	{
 		Polynomial d;
-		for(int j=0;j<terms;j++)
+		for(int j=0;j<b.terms;j++)
 		{
 			float coef = termArray[i].coef * b.termArray[j].coef;
 			int exp = termArray[i].exp + b.termArray[j].exp;
-			c.newTerm(coef, exp);
+			d.newTerm(coef, exp);
 		}
 	}
 	return c; 
