@@ -30,8 +30,10 @@ int main()
     getline(cin, input); 
     string a;
 
-    for (char c : input) {  
-        if (c != ',') {      
+    for (char c : input)
+    {  
+        if (c != ',')
+        {      
             a += c;
         }
     }
