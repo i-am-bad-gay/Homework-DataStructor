@@ -27,162 +27,260 @@
 
 ```cpp
 #include <iostream>
-#include <cmath>
 using namespace std;
 
-class Polynomial;
+/*************************************************
+ * 1. ChainNode
+ * 功能：
+ *   單向鏈結串列的基本節點
+ *   data : 存放資料
+ *   link : 指向下一個節點
+ *************************************************/
 
-class Term
-{
-    friend Polynomial;
-    friend ostream& operator<<(ostream &output,const Polynomial &Poly);
-    private:
-        int exp;	// 指数
-        float coef; // 系数
+template <class T>
+class ChainNode {
+public:
+    T data;                  // 節點中存放的資料
+    ChainNode<T>* link;      // 指向下一個節點
+
+    // 建構子
+    ChainNode(const T& element = T(), ChainNode<T>* next = nullptr)
+        : data(element), link(next) {}
 };
 
-class Polynomial{
-    private:
-    	Term *termArray;
-    	int capacity;	//容量
-    	int terms;		//實際使用
-        
-    public:
-    	Polynomial():capacity(2),terms(0){
-    		termArray = new Term[capacity];
-    	}
-    	~Polynomial(){delete[] termArray;}
+// 先宣告 Chain，讓 Iterator 可以成為朋友
+template <class T> class Chain;
 
-    	Polynomial Add(Polynomial b);
-		Polynomial Mult(Polynomial b);
-		float eval(float f);
-    	void newTerm(const float newcoef,const int newexp);
+/*************************************************
+ * 3. ChainIterator
+ * 功能：
+ *   讓 Chain 可以使用 Begin(), End()
+ *   並支援 ++ 與 * 操作子
+ *************************************************/
 
-    	friend istream& operator>>(istream &input,Polynomial &Poly);
-    	friend ostream& operator<<(ostream& os, const Polynomial& poly);
-    
+template <class T>
+class ChainIterator {
+public:
+    typedef ChainIterator<T> iterator;
+
+    // 建構子，接收一個節點指標
+    ChainIterator(ChainNode<T>* node = nullptr) : current(node) {}
+
+    // 取出目前節點的資料
+    T& operator*() const {
+        return current->data;
+    }
+
+    // 前置 ++，移動到下一個節點
+    iterator& operator++() {
+        current = current->link;
+        return *this;
+    }
+
+    // 判斷兩個 iterator 是否不同
+    bool operator!=(const iterator& rhs) const {
+        return current != rhs.current;
+    }
+
+private:
+    ChainNode<T>* current;    // 目前指向的節點
+    friend class Chain<T>;   // 讓 Chain 可以存取 private 成員
 };
 
-istream& operator>>(istream& is, Polynomial& poly){
-    float coef;int exp,n;
-    is>>n;
-    while(n--){
-    	is>>coef>>exp;
-    	poly.newTerm(coef,exp);
+/*************************************************
+ * 2. Chain
+ * 功能：
+ *   單向鏈結串列的容器
+ *   支援插入、走訪、Begin/End
+ *************************************************/
+
+template <class T>
+class Chain {
+public:
+    typedef ChainIterator<T> iterator;
+
+    Chain() : first(nullptr), size(0) {}
+
+    ~Chain() { clear(); }
+
+    bool empty() const { return size == 0; }
+    int Size() const { return size; }
+
+    // 回傳 iterator，指向第一個節點
+    iterator Begin() { return iterator(first); }
+
+    // 回傳 iterator，代表結尾 (nullptr)
+    iterator End() { return iterator(nullptr); }
+
+    // 從前面插入
+    void InsertFront(const T& e) {
+        first = new ChainNode<T>(e, first);
+        size++;
     }
-    return is;
-}
 
-ostream& operator<<(ostream& os, const Polynomial& poly){
-    for(int i=0;i<poly.terms;++i){
-    	if(i>0) os<<"+";
-    	os<<poly.termArray[i].coef<<"X^"<<poly.termArray[i].exp;
-    }
-    return os;
-}
-
-void Polynomial::newTerm (const float theCoef, const int theExp) {
-    if(theCoef==0) return;
-
-    if(terms==capacity){ 	//擴充
-    	capacity*=2;
-    	Term *temp=new Term[capacity];
-    	copy(termArray,termArray+terms,temp);
-    	delete []termArray;
-    	termArray=temp;
-    }
-
-	int i = 0;
-    while (i < terms && termArray[i].exp > theExp) i++; 	//找到插入的位置
-
-	
-    if (i < terms && termArray[i].exp == theExp) { 		// 如果同次項已存在 直接加系數
-        termArray[i].coef += theCoef;
-        if (termArray[i].coef == 0) { 	// 如果加完變 0 就移除這項
-            
-            for (int j = i; j < terms - 1; j++) 	//這是把i之後的都往後移動
-                termArray[j] = termArray[j + 1];
-            terms--;
+    // 從尾巴插入
+    void InsertBack(const T& e) {
+        if (!first) {
+            first = new ChainNode<T>(e);
+        } else {
+            ChainNode<T>* cur = first;
+            while (cur->link)
+                cur = cur->link;
+            cur->link = new ChainNode<T>(e);
         }
-        return;
-	}
-
-	
-	for (int j = terms; j > i; --j)
-        termArray[j] = termArray[j - 1];
-    
-    termArray[i].coef = theCoef;
-    termArray[i].exp = theExp;
-    terms++;
-}
-
-
-Polynomial Polynomial::Add(Polynomial b){
-    Polynomial c;
-    int aPos=0,bPos=0;
-    while((aPos<terms)&&(bPos<b.terms)){
-    	if(termArray[aPos].exp==b.termArray[bPos].exp){				//指數相同
-    		float t=termArray[aPos].coef+b.termArray[bPos].coef;	//係數相加
-    		if(t) c.newTerm(t,termArray[aPos].exp); 	//確認係數不為0
-    		aPos++;bPos++;
-    	}
-    	else if(termArray[aPos].exp<b.termArray[bPos].exp){ 	//指數比大小
-    		c.newTerm(b.termArray[bPos].coef,b.termArray[bPos].exp);
-    		bPos++;
-    	}else{
-    		c.newTerm(termArray[aPos].coef,termArray[aPos].exp);
-    		aPos++;
-    	}
+        size++;
     }
-	for(;aPos<terms;aPos++)
-		c.newTerm(termArray[aPos].coef,termArray[aPos].exp);
-	for(;bPos<b.terms;bPos++)
-		c.newTerm(b.termArray[bPos].coef,b.termArray[bPos].exp);
-	return c;
-}
 
-Polynomial Polynomial::Mult(Polynomial b){
-    Polynomial c;
-
-	for(int i=0;i<b.terms;i++)
-	{
-		Polynomial d;
-		for(int j=0;j<terms;j++)
-		{
-			float coef = termArray[i].coef * b.termArray[j].coef;
-			int exp = termArray[i].exp + b.termArray[j].exp;
-			c.newTerm(coef, exp);
-		}
-	}
-	return c; 
-}
-
-
-float Polynomial::eval(float f) {
-    float result = 0.0;
-    for (int i = 0; i < terms; ++i) {
-        result += termArray[i].coef * pow(f, termArray[i].exp);
+    // 清空整條串列
+    void clear() {
+        while (first) {
+            ChainNode<T>* next = first->link;
+            delete first;
+            first = next;
+        }
+        size = 0;
     }
-    return result;
+
+private:
+    ChainNode<T>* first;  // 指向第一個節點
+    int size;             // 節點數量
+};
+
+/*************************************************
+ * 4. Polynomial（循環鏈結串列）
+ *************************************************/
+
+// 多項式的一項：係數與次方
+struct Term {
+    int coef;   // 係數
+    int exp;    // 次方
+    Term(int c = 0, int e = 0) : coef(c), exp(e) {}
+};
+
+class Polynomial {
+public:
+    Polynomial() {
+        // 建立 header node
+        head = new ChainNode<Term>(Term(0, -1));
+        head->link = head; // 形成循環串列
+    }
+
+    ~Polynomial() {
+        clear();
+        delete head;
+    }
+
+    // 插入一個多項式項目（依次方由大到小）
+    void InsertTerm(int c, int e) {
+        if (c == 0) return;
+
+        ChainNode<Term>* prev = head;
+        ChainNode<Term>* cur = head->link;
+
+        // 找到適合插入的位置
+        while (cur != head && cur->data.exp > e) {
+            prev = cur;
+            cur = cur->link;
+        }
+
+        // 次方相同，合併係數
+        if (cur != head && cur->data.exp == e) {
+            cur->data.coef += c;
+            if (cur->data.coef == 0) {
+                prev->link = cur->link;
+                delete cur;
+            }
+        } else {
+            // 新增節點
+            prev->link = new ChainNode<Term>(Term(c, e), cur);
+        }
+    }
+
+    // 多項式加法
+    Polynomial operator+(const Polynomial& b) const {
+        Polynomial result;
+        ChainNode<Term>* aCur = head->link;
+        ChainNode<Term>* bCur = b.head->link;
+
+        while (aCur != head && bCur != b.head) {
+            if (aCur->data.exp > bCur->data.exp) {
+                result.InsertTerm(aCur->data.coef, aCur->data.exp);
+                aCur = aCur->link;
+            } else if (aCur->data.exp < bCur->data.exp) {
+                result.InsertTerm(bCur->data.coef, bCur->data.exp);
+                bCur = bCur->link;
+            } else {
+                result.InsertTerm(aCur->data.coef + bCur->data.coef,
+                                  aCur->data.exp);
+                aCur = aCur->link;
+                bCur = bCur->link;
+            }
+        }
+
+        // 剩餘項目直接加入
+        while (aCur != head) {
+            result.InsertTerm(aCur->data.coef, aCur->data.exp);
+            aCur = aCur->link;
+        }
+        while (bCur != b.head) {
+            result.InsertTerm(bCur->data.coef, bCur->data.exp);
+            bCur = bCur->link;
+        }
+        return result;
+    }
+
+    // 輸出多項式
+    void Print() const {
+        ChainNode<Term>* cur = head->link;
+        while (cur != head) {
+            if (cur != head->link && cur->data.coef > 0)
+                cout << "+";
+            cout << cur->data.coef << "x^" << cur->data.exp;
+            cur = cur->link;
+        }
+        cout << endl;
+    }
+
+private:
+    ChainNode<Term>* head; // header node
+
+    void clear() {
+        ChainNode<Term>* cur = head->link;
+        while (cur != head) {
+            ChainNode<Term>* next = cur->link;
+            delete cur;
+            cur = next;
+        }
+        head->link = head;
+    }
+};
+
+
+int main() {
+    // 測試 Chain 與 Iterator
+    Chain<int> x;
+    x.InsertBack(1);
+    x.InsertBack(2);
+    x.InsertBack(3);
+
+    for (Chain<int>::iterator it = x.Begin(); it != x.End(); ++it)
+        cout << *it << " ";
+    cout << endl;
+
+    // 測試 Polynomial
+    Polynomial p1, p2;
+    p1.InsertTerm(3, 2); // 3x^2
+    p1.InsertTerm(2, 1); // 2x^1
+
+    p2.InsertTerm(1, 2); // 1x^2
+    p2.InsertTerm(4, 0); // 4x^0
+
+    Polynomial p3 = p1 + p2;
+    p3.Print(); // 4x^2+2x^1+4x^0
+
+    return 0;
 }
 
-int main(){
-	Polynomial a, b;
-	cin >> a >> b;
-
-	cout << "a(x): " << a << endl;
-	cout << "b(x): " << b << endl;
-
-	Polynomial c = a.Add(b);
-	cout << "a + b: " << c << endl;
-
-	Polynomial d = a.Mult(b);
-	cout << "a * b: " << d << endl;
-
-	cout << "a(2) = " << a.eval(2) << endl;
-	cout << "b(2) = " << b.eval(2) << endl;
-	system("pause");
-}
 ```
 
 ## 遞迴效能分析

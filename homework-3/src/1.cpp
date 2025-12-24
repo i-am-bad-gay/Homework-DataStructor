@@ -23,8 +23,48 @@ public:
     T data;                  // 節點中存放的資料
     ChainNode<T>* link;      // 指向下一個節點
 
+    // 建構子
     ChainNode(const T& element = T(), ChainNode<T>* next = nullptr)
         : data(element), link(next) {}
+};
+
+// 先宣告 Chain，讓 Iterator 可以成為朋友
+template <class T> class Chain;
+
+/*************************************************
+ * 3. ChainIterator
+ * 功能：
+ *   讓 Chain 可以使用 Begin(), End()
+ *   並支援 ++ 與 * 操作子
+ *************************************************/
+
+template <class T>
+class ChainIterator {
+public:
+    typedef ChainIterator<T> iterator;
+
+    // 建構子，接收一個節點指標
+    ChainIterator(ChainNode<T>* node = nullptr) : current(node) {}
+
+    // 取出目前節點的資料
+    T& operator*() const {
+        return current->data;
+    }
+
+    // 前置 ++，移動到下一個節點
+    iterator& operator++() {
+        current = current->link;
+        return *this;
+    }
+
+    // 判斷兩個 iterator 是否不同
+    bool operator!=(const iterator& rhs) const {
+        return current != rhs.current;
+    }
+
+private:
+    ChainNode<T>* current;    // 目前指向的節點
+    friend class Chain<T>;   // 讓 Chain 可以存取 private 成員
 };
 
 /*************************************************
@@ -85,44 +125,6 @@ private:
     ChainNode<T>* first;  // 指向第一個節點
     int size;             // 節點數量
 };
-
-/*************************************************
- * 3. ChainIterator
- * 功能：
- *   讓 Chain 可以使用 Begin(), End()
- *   並支援 ++ 與 * 操作子
- *************************************************/
-
-template <class T>
-class ChainIterator {
-public:
-    typedef ChainIterator<T> iterator;
-
-    // 建構子，接收一個節點指標
-    ChainIterator(ChainNode<T>* node = nullptr) : current(node) {}
-
-    // 取出目前節點的資料
-    T& operator*() const {
-        return current->data;
-    }
-
-    // 前置 ++，移動到下一個節點
-    iterator& operator++() {
-        current = current->link;
-        return *this;
-    }
-
-    // 判斷兩個 iterator 是否不同
-    bool operator!=(const iterator& rhs) const {
-        return current != rhs.current;
-    }
-
-private:
-    ChainNode<T>* current;    // 目前指向的節點
-    friend class Chain<T>;   // 讓 Chain 可以存取 private 成員
-};
-
-
 
 /*************************************************
  * 4. Polynomial（循環鏈結串列）
