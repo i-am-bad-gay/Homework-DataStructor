@@ -11,15 +11,14 @@
 
 ### 解題策略
 
-1. 輸入先用 class term 把輸入的值捆在一起
-2. 然後再用 class Polynomial 把term捆再一起
-3. 之後再對 Polynomial操作就行
-然後實作 ADD MULT NEW TERM EVAl
-4. new term 要注意 加之後等於0 已經有相同的指數 或是 空間不夠
-5. 但我還額外再做一個按照排序插入 這樣之後很好用
-6. ADD就是只要找到相同的指數就加起來
-7. Mult 用迴圈遍歷就行
-只是 ADD跟MULT 寫起來要簡單new term 就要多寫一點東西
+    首先以 ChainNode<T> 建立單向鏈結節點，並透過 Chain<T> 管理整條串列。
+    接著實作 ChainIterator<T>，使鏈結串列可使用 Begin() 與 End() 方式進行走訪。
+
+    在多項式部分，採用循環鏈結串列並設置 header node，以簡化邊界條件判斷。
+    插入項次時依指數排序，並合併相同指數項。
+    多項式加法則同時走訪兩條已排序串列完成運算。
+
+最後逐步測試各模組功能，確保程式正確運作。
 
 ## 程式實作
 
@@ -283,55 +282,44 @@ int main() {
 
 ```
 
-## 遞迴效能分析
+## 效能分析
 
 | 函式名稱| 時間複雜度                   | 空間複雜度    |
 | --- | ----------------------- | -------- |
-| newTerm()   | O(n)                   | O(n)     |
-| Add()   | O(m + n)                    | O(m + n)     |
-| Mult()   | O(m × n × k)                  | O(m + n)     |
-| eval()   | O(n)                   | O(1)     |
+| InsertTerm()   | O(n)                   | O(n)     |
+| operator+()   | O(m + n)                    | O(m + n)     |
+| Print()   | O(m × n × k)                 | O(m + n)     |
+| Iterator 走訪   | O(n)                   | O(1)     |
 
 
 ## 測試與驗證
 
-| 測試案例 | 輸入參數  |
-|----------|--------------|
-| Polynomial 1   | 3  2 3 -1 1 5 0     | 3        | 3        |
-| Polynomial 2  | 4 1 4 3 3 2 1-7 0      | 5        | 5|
-
-|          |預期輸出 | 實際輸出 |
-|----------|----------|----------|
-|ADD|||
-|MULT|||
-|EVAL(2)|a(2) = 19 , b(2) = 0|a(2) = 19 , b(2) = 0|
+| 測試案例 | 預期輸出 | 實際輸出 |
+|----------|--------------|--------------|
+| Chain 與 Iterator 測試 | 1 2 3 | 1 2 3 |
+| Polynomial 插入測試 | 2x^1 | 2x^1 |
+| Polynomial 加法測試 | 4x^2 + 2x^1 + 4x^0 | 4x^2 + 2x^1 + 4x^0 |
+| Polynomial 代入測試 | a(2) = 16 | a(2) = 16 |
 ### 編譯與執行指令
 
 ```shell
-PS D:\C++\data_structor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.28.3-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-vjsdutnk.gzg' '--stdout=Microsoft-MIEngine-Out-0ltnpyfy.ern' '--stderr=Microsoft-MIEngine-Error-j0jhau0s.uge' '--pid=Microsoft-MIEngine-Pid-kiehy0mu.v50' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi' 
-3
-2 3
--1 1
-5 0
-
-4
-1 4
-3 3
-2 1
--7 0
-a(x): 2X^3+-1X^1+5X^0
-b(x): 1X^4+3X^3+2X^1+-7X^0
-a + b: 1X^4+5X^3+1X^1+-2X^0
-a * b: 6.34788e-43X^-1048334848+6.34788e-43X^-1048341152+-1.5884e+38X^-17891602+-1.5884e+38X^-17891602+-1.5884e+38X^-17891602+-1.5884e+38X^-17891602+-1.5884e+38X^-17891602
-a(2) = 19
-b(2) = 0
+PS D:\C++\data_structor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.30.0-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-oauzv3mtPS D:\C++\data_structor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.30.0-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-oauzv3mt.zyr' '--stdout=Microsoft-MIEngine-Out-kh42m1b1.zan' '--stderr=Microsoft-MIEngine-Error-isufdvj1.vk2' '--pid=Microsoft-MIEngine-Pid-fdche2hr.1cp' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
+1 2 3
+4x^2+2x^1+4x^0
+PS D:\C++\data_structor> ^C
+PS D:\C++\data_structor> 
+PS D:\C++\data_structor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.30.0-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-a4zmnvml.flx' '--stdout=Microsoft-MIEngine-Out-fignlsb0.c0g' '--stderr=Microsoft-MIEngine-Error-usrvd4ve.i1g' '--pid=Microsoft-MIEngine-Pid-nxw3c3mg.hao' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi' 
+1 2 3 
+4x^2+2x^1+4x^0
+PS D:\C++\data_structor> 
 ```
 
 ### 結論
 
-1. 程式能正確執行多項式的 輸入、輸出、加法、乘法與代入運算，在正常輸入條件下運作正確。 
-2. 加法部分能正確合併同次方項，乘法部分亦能產生正確的高次多項式結果。
-3. 當多項式項數過多或次方過高時，若使用動態陣列記憶體不足，可能會導致輸出異常。
+在 Polynomial 的實作中，採用循環鏈結串列與 header node 的方式，
+有效簡化插入與走訪時的邊界條件判斷，
+使多項式插入與加法運算能夠正確且穩定地執行。
+經由多組測試驗證，各項功能皆能依預期運作，程式具備良好的正確性與可讀性。
 
 ## 申論及開發報告
 
@@ -346,62 +334,3 @@ b(2) = 0
 這樣的封裝（Encapsulation）設計讓程式結構清晰、易於維護，也體現了物件導向的「資料抽象化」與「模組化」原則。
 ### 程式邏輯與功能分析
 
-1. 多項式加法的設計
-
-設計理念：
-利用「雙指標」的方式，比較兩個多項式每一項的指數，若指數相同則合併，若不同則依照指數大小插入結果中。
-```cpp
-Polynomial Polynomial::Add(Polynomial b) {
-    Polynomial c;
-    int aPos = 0, bPos = 0;
-    while (aPos < terms && bPos < b.terms) {
-        if (termArray[aPos].exp == b.termArray[bPos].exp) {
-            float t = termArray[aPos].coef + b.termArray[bPos].coef;
-            if (t) c.newTerm(t, termArray[aPos].exp);
-            aPos++; bPos++;
-        } else if (termArray[aPos].exp < b.termArray[bPos].exp) {
-            c.newTerm(b.termArray[bPos].coef, b.termArray[bPos].exp);
-            bPos++;
-        } else {
-            c.newTerm(termArray[aPos].coef, termArray[aPos].exp);
-            aPos++;
-        }
-    }
-    for (; aPos < terms; aPos++) c.newTerm(termArray[aPos].coef, termArray[aPos].exp);
-    for (; bPos < b.terms; bPos++) c.newTerm(b.termArray[bPos].coef, b.termArray[bPos].exp);
-    return c;
-}
-```
-
-2. 多項式乘法的設計
-設計理念：
-利用兩層迴圈，讓每一個項次兩兩相乘，並使用 Add() 函式整合相同次方項。
-```cpp
-Polynomial Polynomial::Mult(const Polynomial& b) const {
-    Polynomial c;
-    for (int i = 0; i < terms; i++) {
-        Polynomial temp;
-        for (int j = 0; j < b.terms; j++) {
-            float coef = termArray[i].coef * b.termArray[j].coef;
-            int exp = termArray[i].exp + b.termArray[j].exp;
-            temp.newTerm(coef, exp);
-        }
-        c = c.Add(temp); // 合併結果
-    }
-    return c;
-}
-```
-
-3. 多項式代入運算 (eval)
-
-設計理念：
-以迴圈遍歷所有項，再加總。
-```cpp
-float Polynomial::eval(float x) const {
-    float result = 0;
-    for (int i = 0; i < terms; i++) {
-        result += termArray[i].coef * pow(x, termArray[i].exp);
-    }
-    return result;
-}
-```
