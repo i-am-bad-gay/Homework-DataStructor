@@ -206,13 +206,18 @@ PS D:\C++\data_structor\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extens
 # 作業一 problem2
 
 ## 解題說明
-
+驗證隨機產生的樹高是否符合理論上的 $O(\log n)$ 成長
 
 
 ### 解題策略
 
-1. 把每一個子集合都當成岔路，先走到路的底端之後再到岔路口，再從岔路口出發
+1. 結構設計：使用 class Node 封裝資料與指標，並建立 class BST 類別管理整棵樹。
+2.  左小右大規則：插入新節點時，從根節點開始比較。比目前節點小往左走，比目前節點大往右走。
+3. 高度測量：使用遞迴法從底層向上回傳高度（$1 + \max(\text{左高}, \text{右高})$）。
+4. 刪除邏輯：
 
+    無小孩/單小孩：直接將子節點（或 nullptr）接上。
+    雙小孩：尋找「右子樹的最小值」替換目前節點的值，再刪除該最小值節點。
 
 
 ## 程式實作
@@ -221,101 +226,133 @@ PS D:\C++\data_structor\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extens
 
 ```cpp
 #include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <ctime>
+
 using namespace std;
 
-void powerSet(string s, int i, string c)
-{
+// 定義節點
+class Node {
+public:
+    int key;
+    Node *left, *right;
+
+    // 建構子
+    Node(int k) : key(k), left(nullptr), right(nullptr) {}
+};
+
+class BST {
+private:
+    Node* root;
+
     
-    if (i == s.size())  //走到底就執行 沒到底就繼續往下繼續走
-    {
-        cout << "(";
-        for (int i = 0; i < c.size(); i++)
-        {
-            cout << c[i];
-            if (i != c.size() - 1)
-                cout << ",";
-        }
-        cout << "),";
-        return;
+    Node* insert(Node* node, int k) {
+        if (!node) return new Node(k);
+        if (k < node->key) node->left = insert(node->left, k);
+        else if (k > node->key) node->right = insert(node->right, k);
+        return node;
     }
 
-    powerSet(s, i + 1, c);  //一直往下走 順便讓 i 記錄往下走了幾次 
-
-    c+= s[i];  //走到底之後 回來 選擇一個字元
-    powerSet(s, i+1, c); //帶著字元走到底
-}
-
-
-int main()
-{
-    string input;
-    getline(cin, input); 
-    string a;
-
-    for (char c : input)  //分割逗號
-    {  
-        if (c != ',')  
-        {      
-            a += c;
-        }
+    int getHeight(Node* node) {
+        if (!node) return 0;
+        return 1 + max(getHeight(node->left), getHeight(node->right));
     }
 
-    cout<<"powerSet={ ";
-    powerSet(a,0,"");
-    
-    cout << " }";
+    Node* deleteNode(Node* node, int k) {
+        if (!node) return nullptr;
+        if (k < node->key) node->left = deleteNode(node->left, k);
+        else if (k > node->key) node->right = deleteNode(node->right, k);
+        else {
+            if (!node->left) { Node* t = node->right; delete node; return t; }
+            if (!node->right) { Node* t = node->left; delete node; return t; }
+            Node* temp = node->right;
+            while (temp->left) temp = temp->left;
+            node->key = temp->key;
+            node->right = deleteNode(node->right, temp->key);
+        }
+        return node;
+    }
+
+public:
+    BST() : root(nullptr) {}
+
+    // 外部呼叫的介面 (Public)
+    void insert(int k) { root = insert(root, k); }
+    int getHeight() { return getHeight(root); }
+    void remove(int k) { root = deleteNode(root, k); }
+};
+
+int main() {
+    srand(time(NULL));
+    int n_list[] = {100, 500, 1000, 2000, 3000, 5000, 10000};
+
+    cout << "n\tH\tlog2n\tH/log2n" << endl;
+    cout << "------------------------------------" << endl;
+
+    for (int n : n_list) {
+        BST tree; // 每次循環建立一棵新樹
+        for (int i = 0; i < n; i++) {
+            tree.insert(rand() % 1000000);
+        }
+
+        int h = tree.getHeight();
+        double log2n = log2(n);
+        
+        cout << n << "\t" << h << "\t" << (int)log2n << "\t" << h / log2n << endl;
+    }
+
+    return 0;
 }
 ```
 
 ## 效能分析
-時間複雜度:O(2^n)
-空間複雜度:O(n)
-
+平均情況 (隨機插入)：$O(\log n)$。如實驗數據所示，樹的高度趨於平衡。
+空間複雜度：$O(n)$。每個資料點對應一個 Node 物件空間。
 ## 測試與驗證
 
 ### 測試案例
 
-| 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
-|----------|--------------|----------|----------|
-| 測試一   | $a,b,c  $    | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)       | (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c)        |
-| 測試二   | $e,g,1  $     | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        | (),(1),(g),(g,1),(e),(e,1),(e,g),(e,g,1)        |
-| 測試三   | $aaa,bb,cc  $        | (),(aaa),(bb),(cc),(aaa,bb),(aaa,cc),(bb,cc),(aaa,bb,cc)       | (),(c),(c),(c,c),(b),(b,c),(b,c),(b,c,c),(b),(b,c),(b,c),(b,c,c),(b,b),(b,b,c),(b,b,c),(b,b,c,c),(a),(a,c),(a,c),(a,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b,b),(a,b,b,c),(a,b,b,c),(a,b,b,c,c),(a),(a,c),(a,c),(a,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b),(a,b,c),(a,b,c),(a,b,c,c),(a,b,b),(a,b,b,c),(a,b,b,c),(a,b,b,c,c),(a,a),(a,a,c),(a,a,c),(a,a,c,c),(a,a,b),(a,a,b,c),(a,a,b,c),(a,a,b,c,c),(a,a,b),(a,a,b,c),(a,a,b,c),(a,a,b,c,c),(a,a,b,b),(a,a,b,b,c),(a,a,b,b,c),(a,a,b,b,c,c),(a),(a,c),(a,c).......... }       |
+| 測試案例 | | |  |  |
+|----------|----------|--------------|----------|----------|
+|  |n      | H      | log2n  | H/log2n|
+|  |100   |  12    |  6     |  1.80618|
+|  |500   |  19   |   8   |    2.11917|
+|  |1000  |  21   |   9   |    2.10721|
+|  |2000   |   23    |  10  |    2.09743|
+|  |3000   | 28   |   11   |   2.42409|
+|  |5000   | 24   |   12   |   1.95317|
+|  |10000  | 30   |   13   |   2.25772|
 
 
 
 ### 編譯與執行指令
 
 ```shell
-$PS D:\Homework-DataStructor> ^C
-$PS D:\Homework-DataStructor>
-$PS D:\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.$'--stdin=Microsoft-MIEngine-In-ogjpaxud.kws' $'--stdout=Microsoft-MIEngine-Out-1v2f4epm.xdu' $'--stderr=Microsoft-MIEngine-Error-wkzhdsg4.35t' $'--pid=Microsoft-MIEngine-Pid-dtcabuh4.rbk' '--dbgExe=D:\mingw64\bin\gdb.$exe' '--interpreter=mi'
-$a,b,c
-powerSet={ (),(c),(b),(b,c),(a),(a,c),(a,b),(a,b,c), }
+PS D:\C++\data_structor\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.31.4-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-v1ju15qi.f51' '--stdout=Microsoft-MIEngine-Out-cwske12i.vs3' '--stderr=Microsoft-MIEngine-Error-2fiqxuxi.ucr' '--pid=Microsoft-MIEngine-Pid-yndlwx1k.nl4' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi' 
+n       H       log2n   H/log2n
+------------------------------------
+100     12      6       1.80618
+500     19      8       2.11917
+1000    21      9       2.10721
+2000    23      10      2.09743
+3000    28      11      2.42409
+5000    24      12      1.95317
+10000   30      13      2.25772
 ```
 
 ### 結論
 
-1. 這樣寫程式能正確的計算只有單個字元的子集合 。  
-2. 但在element字元有>1的情況下，這個方法就不適用了。  
+
 
 ## 申論及開發報告
 
-### 選擇遞迴的優點和缺點
+### 使用 BST 的優點
 
-在本程式中，使用遞迴的優點如下：
+1. 動態維護：相較於排序陣列（Sorted Array），BST 在執行插入與刪除時不需要移動大量的記憶體元素，僅需調整指標，靈活性極高。
+2. 中序走訪優勢：BST 具有天然的排序特性。若執行中序走訪（In-order Traversal），可以在 $O(n)$ 時間內獲得由小到大的排序結果。
+3. 搜尋效率高：在平均情況下，搜尋效率與二分搜尋法相當
 
-1. **程式邏輯簡單化**  
-   相比於其他解法，遞迴更能簡單明瞭的寫出來，只寫出想選或不選的決策樹就好。 
-
-1. **易於理解**
-    比起迴圈或其他寫法，程式比較短，也蠻好理解的，容易看懂。 
-
-
-在本程式中，使用遞迴的缺點如下：.
-
-1. **遞迴的限制**  
-<<<<<<< HEAD
-   當element大於一定的數量的時候，就沒辦法用遞迴了。
-=======
-   當element大於一定的數量的時候，就沒辦法用遞迴了。
->>>>>>> 94be57b1b801c9e5bac7f12322ac6cff3b8f030d
+ 
+### 使用 BST 的缺點
+1.每個節點需要儲存兩個額外的指標空間，相較於 Heap（使用陣列實作），記憶體佔用較多。
