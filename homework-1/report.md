@@ -1,18 +1,17 @@
 # 41343139
 
-作業一 problem1
+# 作業一 problem1
 
 ## 解題說明
-
-實作阿卡曼函數，使用遞迴和非遞迴解題
+使用 Min-Heap (最小堆積) 來實作優先權佇列 (Priority Queue)。
 
 ### 解題策略
 
-1. 遞迴很簡單，只要照著他給的條件遞迴就行
-2. 非遞迴就難上很多，我後來想了很久，想說既然是函數那一定會有規律，
-   所以就有了以下的公式。
-
-3. 主程式呼叫計算的函式，並輸出計算結果。
+Push:將新元素置於陣列末端，透過 Sift-up (向上過濾) 與父節點比較並交換，確保父節點永遠小於子節點。
+POP:
+1.將根節點（最小值）取出。
+2.將陣列最後一個元素移至根部。
+3.執行 Sift-down (向下過濾)：與左右小孩中較小者比較並交換，直到滿足堆積特性或到達葉節點。
 
 ## 程式實作
 
@@ -20,62 +19,125 @@
 
 ```cpp
 #include <iostream>
-#include <cmath>
+#include <algorithm>
+
 using namespace std;
 
-long long Acker(int a,int b)
-{
-	if(a==0) return b+1;
-	else if(b==0) return Acker(a-1,1);
-	else return Acker(a-1,Acker(a,b-1));
-}
+// 抽象父類
+template<class T>
+class MinPQ {
+public:
+    virtual ~MinPQ() {}
+    virtual bool IsEmpty() const = 0;
+    virtual const T& Top() const = 0;
+    virtual void Push(const T& x) = 0;
+    virtual void Pop() = 0;
+};
 
-long long non(int a,int b)
-{
-	if(a==0)return b+1;
-	if(a==1)return b+2;
-	if(a==2)return 2*b+3;
-	if(a==3)return pow(2,b+3)-3;
-	if(a==4) {  // 2↑↑(n+3)-3 
-        long long res = 2;
-        for(int i = 1; i < b+3; i++) {
-            res = (long long)pow(2, res);  
+template<class T>
+class MinHeap : public MinPQ<T> {
+private:
+    T *heap;
+    int capacity;
+    int heapsize;
+
+    // 動態擴展空間
+    void resize() {
+        int newCapacity = capacity * 2;
+        T* newHeap = new T[newCapacity + 1];
+        for (int i = 1; i <= heapsize; i++) {
+            newHeap[i] = heap[i];
         }
-        return res - 3;
+        delete[] heap;
+        heap = newHeap;
+        capacity = newCapacity;
     }
+
+public:
+    MinHeap(int cap = 10) : capacity(cap), heapsize(0) {
+        heap = new T[capacity + 1];
+    }
+
+    ~MinHeap() { delete[] heap; }
+
+    bool IsEmpty() const override {
+        return heapsize == 0;
+    }
+
+    const T& Top() const override {
+        if (IsEmpty()) throw "Heap is empty";
+        return heap[1];
+    }
+
+    void Push(const T& x) override {
+        if (heapsize == capacity) {
+            resize();
+        }
+
+        // Sift-up 向上調整
+        int i = ++heapsize;
+        while (i > 1 && x < heap[i / 2]) {
+            heap[i] = heap[i / 2];
+            i /= 2;
+        }
+        heap[i] = x;
+    }
+
+    void Pop() override {
+        if (IsEmpty()) return;
+
+        // 拿最後一個元素補到根部
+        T lastElement = heap[heapsize--];
+
+        // Sift-down 向下調整
+        int i = 1;      // 從根開始
+        int child = 2;  // 左小孩位置
+        while (child <= heapsize) {
+            // 找出較小的小孩 (如果有右小孩且右小孩更小)
+            if (child < heapsize && heap[child + 1] < heap[child]) {
+                child++;
+            }
+            
+            // 如果最後一個元素比小孩都小，就定位了
+            if (lastElement <= heap[child]) break;
+
+            heap[i] = heap[child];
+            i = child;
+            child *= 2;
+        }
+        if (heapsize >= 0) heap[i] = lastElement;
+    }
+};
+
+int main() {
+    
+        MinHeap<int> pq;
+
+        cout << "輸入:" << endl;
+        int a;
+        while (cin >> a) {
+            pq.Push(a);
+            cout << "存入 " << a << ", 目前最小值 (Top): " << pq.Top() << endl;
+        }
+
+        cout << "\n依序取出元素 (從小到大):" << endl;
+        while (!pq.IsEmpty()) {
+            cout << "取出: " << pq.Top() << endl;
+            pq.Pop();
+        }
+
+    
+    return 0;
 }
 
-int main()
-{
-	long long a,b;
-    while(cin>>a>>b)
-    {
-		cout<<"Recursive: "<<Acker(a,b)<<endl;
-		cout<<"Non-Recursive: "<<non(a,b)<<endl;
-	} 
-}
 ```
 
 ## 遞迴效能分析
 
-| a 值 | 時間複雜度                   | 空間複雜度    |
-| --- | ----------------------- | -------- |
-| 0   | O(1)                    | O(1)     |
-| 1   | O(b)                    | O(b)     |
-| 2   | O(b²)                   | O(b)     |
-| 3   | O(2^b)                  | O(b)     |
-| 4   |  |  |
+Push時間複雜度:$O(\log n)$
+Pop時間複雜度:$O(\log n)$
 
 
-## 遞迴效能分析
-
-| a 值 | 時間複雜度    | 空間複雜度 |
-| --- | -------- | ----- |
-| 0   | O(1)     | O(1)  |
-| 1   | O(1)     | O(1)  |
-| 2   | O(1)     | O(1)  |
-| 3   | O(log b) | O(1)  |
-| 4   | O(b)     | O(1)  |
 
 ## 測試與驗證
 
@@ -83,101 +145,65 @@ int main()
 
 | 測試案例 | 輸入參數 $n$ | 預期輸出 | 實際輸出 |
 |----------|--------------|----------|----------|
-| 測試一   | $n = (1,1)$      | 3        | 3        |
-| 測試二   | $n = (2,1)$      | 5        | 5        |
-| 測試三   | $n = (4,0)$      | 13       | 13       |
-| 測試四   | $n = (3,5)$      | 253      | 253       |
-| 測試五   | $n = (4,1)$      | 異常 | 異常 |
+| 測試一   | 8 5 7 6 2 4 3 1 9       | 1 2 3 4 5 6 7 8 9        | 1 2 3 4 5 6 7 8 9   |
+
 
 ### 編譯與執行指令
 
 ```shell
-$PS D:\Homework-DataStructor> ^C
-$PS D:\Homework-DataStructor>
-$PS D:\Homework-DataStructor>  & 'c:\Users\huang\.$vscode\extensions\ms-vscode.cpptools-1.28.$1-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' $'--stdin=Microsoft-MIEngine-In-rculw2xu.pll' $'--stdout=Microsoft-MIEngine-Out-xwlwadxx.ftk' $'--stderr=Microsoft-MIEngine-Error-erf4cd4e.0d1' $'--pid=Microsoft-MIEngine-Pid-qxcrkkin.iyo' '--dbgExe=D:\mingw64\bin\gdb.$exe' '--interpreter=mi'
-$ 1 1
-Recursive: 3
-Non-Recursive: 3
-$ 2 1
-Recursive: 5
-Non-Recursive: 5
-$ 4 0
-Recursive: 13
-Non-Recursive: 13
-$ 3 5
-Recursive: 253
-Non-Recursive: 253
+PS D:\C++\data_structor\Homework-DataStructor>  & 'c:\Users\huang\.vscode\extensions\ms-vscode.cpptools-1.31.3-win32-x64\debugAdapters\bin\WindowsDebugLauncher.exe' '--stdin=Microsoft-MIEngine-In-y1vcxylj.5zy' '--stdout=Microsoft-MIEngine-Out-ihpqckuh.ptt' '--stderr=Microsoft-MIEngine-Error-kygl20xh.z4d' '--pid=Microsoft-MIEngine-Pid-mxmsqz1p.bh5' '--dbgExe=D:\mingw64\bin\gdb.exe' '--interpreter=mi'
+輸入:
+8 5 7 6 2 4 3 1 9 
+存入 8, 目前最小值 (Top): 8
+存入 5, 目前最小值 (Top): 5
+存入 7, 目前最小值 (Top): 5
+存入 6, 目前最小值 (Top): 5
+存入 2, 目前最小值 (Top): 2
+存入 4, 目前最小值 (Top): 2
+存入 3, 目前最小值 (Top): 2
+存入 1, 目前最小值 (Top): 1
+存入 9, 目前最小值 (Top): 1
+^Z  
+
+依序取出元素 (從小到大):
+取出: 1
+取出: 2
+取出: 3
+取出: 4
+取出: 5
+取出: 6
+取出: 7
+取出: 8
+取出: 9
 ```
 
 ### 結論
+1. 透過 8 5 7 6 2 4 3 1 9 的輸入測試，程式能即時透過 Top() 回傳當前最小值，且最後輸出有達到min-heap的要求。
 
-1. 程式能正確計算 $(m,n) n<4$ 的數字。  
-2. 但在 $n>4$ 的情況下，除了 $(4,0)$ 程式都會出現異常。  
-3. 但非遞迴的方法如果改成用string輸出或許可以計算，但遞迴不論如何都會爆開。
+2. 本實作採用陣列（Array-based）存儲二元樹，相較於鏈結串列，具有更好的 記憶體連續性（Locality of Reference）。Push 與 Pop 的時間複雜度均穩定在 $O(\log n)$，適合處理大量動態資料
 
 ## 申論及開發報告
 
-### 選擇遞迴的優點和缺點
+### min heap的優點
+1. 對於需要頻繁獲取最小值的應用（如：實作優先權佇列），效率極高。
+2. 不論是新增元素還是移除最小值，重新調整堆積結構的時間複雜度僅為對數等級。
+3. Min-Heap 通常使用完全二元樹的結構，這意味著我們可以用連續的陣列（Array）來儲存，不需要像鏈結串列那樣額外儲存指標。
+4. 父子節點的關係可以用簡單的索引公式計算（父節點為 $i/2$，左小孩 $2i$，右小孩 $2i+1$），程式邏輯清晰，易於維護
 
-在本程式中，使用遞迴來計算阿卡曼和的優點如下：
+### min heap的缺點
+1. 堆積只保證父小於子，並不保證左小於右。如果你想在 Min-Heap 中找一個特定的值，必須要掃描整個陣列，效率遠低於二元搜尋樹。
+2. 堆積並不是一個完全排序的結構。雖然它能保證根部是最小，但同一層的兄弟節點之間沒有特定順序。如果你需要資料隨時保持「由小到大」的完整排列，Min-Heap 無法直接辦到，必須不斷執行 Pop 操作才能得到排序結果。
 
-1. **程式邏輯簡單直觀**  
-   遞迴的寫法能夠清楚的將問題公式化，蠻可讀的，一看就懂。  
 
-2. **易於理解與實現**  
-   遞迴的程式碼更接近阿卡曼函數的表示方式。  
-   以本程式為例：  
 
-   ```cpp
-  	long long Acker(int a,int b)
-	{
-		if(a==0) return b+1;
-		else if(b==0) return Acker(a-1,1);
-		else return Acker(a-1,Acker(a,b-1));
-	}
-   ```
-在本程式中，使用遞迴來計算阿卡曼和的缺點如下：.
 
-1. **程式運行速度慢**  
-   遞迴並不像迴圈一樣再跑一次那麼簡單，而是要存著這段再開一個functioin，
-   在需要遞迴很多次的情況下，就會很消耗空間跟時間。
 
    
-### 選擇非遞迴(公式解)的優點和缺點
 
-在本程式中，使用非遞迴(公式解)來計算阿卡曼和的優點如下：
 
-1. **程式邏輯運行速度快非常多**  
-   因為只要直接計算然後就返回數值，所以執行速度快上超級多。
 
-2. **程式需要的空間也少很多**  
-   公式解只要用到少數必要的變數就好，不像遞迴要存很多東西。
 
-3. **程式拓展性**  
-   假如真的要計算(4,1)的值，這個方法稍微改一下就可以用了。
-
-在本程式中，使用非遞迴(公式解)來計算阿卡曼和的缺點如下：
-
-1. **程式邏可讀性變差**  
-   因為是把那些條件直接變成公式，所以直接閱讀代碼是無法理解在幹嘛。
-   ```cpp
-	long long non(int a,int b)
-	{
-		if(a==0)return b+1;
-		if(a==1)return b+2;
-		if(a==2)return 2*b+3;
-		if(a==3)return pow(2,b+3)-3;
-		if(a==4) {  // 2↑↑(n+3)-3 
-	        long long res = 2;
-	        for(int i = 1; i < b+3; i++) {
-	            res = (long long)pow(2, res);  
-	        }
-	        return res - 3;
-	    }
-	}
-   ```
-
-作業一 problem2
+# 作業一 problem2
 
 ## 解題說明
 
