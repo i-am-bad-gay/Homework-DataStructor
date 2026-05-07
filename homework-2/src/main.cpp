@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <list>   
 using namespace std;
 
 class Graph
@@ -24,22 +25,21 @@ public:
     virtual void DeleteEdge(int u,int v)=0;
 };
 
-class AdjacencyMatrixGraph: public Graph
+class AdjacencyMatrix: public Graph
 {
 private:
     vector<vector<int>> matrix;
     map<int, int> maap;
 public:
-    AdjacencyMatrixGraph()
+    AdjacencyMatrix()
     {
-        n=0;  //vertex & edge不能為空　
+        n=0;  
         e=0;
         matrix.assign(n, vector<int>(n, 0));
 
-
     }
 
-    ~AdjacencyMatrixGraph(){}
+    ~AdjacencyMatrix(){}
 
     int Degree(int u)const override
     {
@@ -102,6 +102,84 @@ public:
     }
 };
 
+class node
+{
+public:
+    int data;
+    node* nex; 
+
+    node(int d):data(d),nex(nullptr){}
+    
+};
+
+bool check(vector <node*>& a,int b)  //check vector is there have any repeat number
+{
+    for(int i=0;i<a.size();i++)
+    {
+        if(a[i].data==b)return true;
+    }
+    return false;
+}
+
+class AdjacencyList: public Graph
+{
+private:    
+    vector <node*> liss;  //拿來裝nodes的
+public:
+    AdjacencyList()
+    {
+        n=0;e=0;
+    }
+    ~AdjacencyList(){}
+
+    int Degree(int u)const override
+    {
+
+    }
+    bool ExistsEdge(int u,int v)const override
+    {
+
+    }
+    void InsertVertex(int v)override
+    {
+        if(check(liss,v)==0)
+        {
+            node* newNode=new node(v);
+            liss.push_back(newNode);
+        }
+    }   
+    void InsertEdge(int u,int v) override
+    {
+        //產生一個新的node
+        node* newNode = new node(v);
+        //找到u的尾端的ptr
+       if (liss[u]->nex == nullptr) {
+        // 如果還沒有鄰居，直接讓 liss[u] 指向這個新節點
+        liss[u] = newNode;
+        } 
+        else {
+        // 3. 如果已經有鄰居，就順著指標走到最末端
+        node* temp = liss[u];
+        while (temp->nex != nullptr) {
+            temp = temp->nex;
+        }
+        // 4. 把新鄰居接在最後面
+        temp->nex = newNode;
+        }
+
+        
+    }
+    void DeleteVertex(int v) override
+    {
+
+    }
+    void DeleteEdge(int u,int v)override
+    {
+
+    }
+};
+
+
 
 int main()
 {   
@@ -112,8 +190,9 @@ int main()
     1 2 2 3 3 4 4 1  //邊
     */
     
-    AdjacencyMatrixGraph Adj();
-    while(cin>>a); Adj.InsertVertex(a);}
-    while(cin>>a>>b)e.push_back(a);
+    AdjacencyMatrix adj;
+    while(cin>>a){ adj.InsertVertex(a);}
+    while(cin>>a>>b)adj.InsertEdge(a,b);
     
+
 }
