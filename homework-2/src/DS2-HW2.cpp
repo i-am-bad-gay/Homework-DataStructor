@@ -11,8 +11,8 @@ using namespace std;
 template <class T>
 void Permute(vector<T>& a, int n) {
     for (int i = n - 1; i >= 1; i--) {
-        int j = rand() % (i + 1); // ÀH¾÷¬D¿ï 0 ¨ì i ¤§¶¡ªº¯Á¤Ş
-        swap(a[j], a[i]);         // ¥æ´«¤¸¯À¦ì¸m
+        int j = rand() % (i + 1); // éš¨æ©ŸæŒ‘é¸ 0 åˆ° i ä¹‹é–“çš„ç´¢å¼•
+        swap(a[j], a[i]);         // äº¤æ›å…ƒç´ ä½ç½®
     }
 }
 
@@ -24,7 +24,7 @@ void InsertionSort(vector<int>& a) {
     for (int i = 1; i < n; i++) {
         int key = a[i];
         int j = i - 1;
-        // ±N¤j©ó key ªº¤¸¯À¦V«á²¾°Ê¡A¬° key ÄË¥X´¡¤JªÅ¶¡
+        // å°‡å¤§æ–¼ key çš„å…ƒç´ å‘å¾Œç§»å‹•ï¼Œç‚º key é¨°å‡ºæ’å…¥ç©ºé–“
         while (j >= 0 && a[j] > key) {
             a[j + 1] = a[j];
             j--;
@@ -34,8 +34,8 @@ void InsertionSort(vector<int>& a) {
 }
 
 /**
- * (b) Quick Sort - ¤T¼Æ¨ú¤¤ªk (Median-of-Three)
- * ÂÇ¥Ñ¬D¿ï low, mid, high ¤T­Ó¦ì¸mªº¤¤¦ì¼Æ§@¬° Pivot¡A¨ÓÁ×§K·¥ºİ¼Æ¦C¾É­Pªº°h¤Æ¡C
+ * (b) Quick Sort - ä¸‰æ•¸å–ä¸­æ³• (Median-of-Three)
+ * è—‰ç”±æŒ‘é¸ low, mid, high ä¸‰å€‹ä½ç½®çš„ä¸­ä½æ•¸ä½œç‚º Pivotï¼Œä¾†é¿å…æ¥µç«¯æ•¸åˆ—å°è‡´çš„é€€åŒ–ã€‚
  */
 int MedianOfThree(vector<int>& a, int low, int high) {
     int mid = low + (high - low) / 2;
@@ -43,32 +43,32 @@ int MedianOfThree(vector<int>& a, int low, int high) {
     if (a[low] > a[high]) swap(a[low], a[high]);
     if (a[mid] > a[high]) swap(a[mid], a[high]);
 
-    // ±N¿ï¥Xªº Pivot ÂÃ¦b high - 1 ªº¦ì¸m¡A¤è«K«áÄò¤À³Î«ü¼Ğ²¾°Ê
+    // å°‡é¸å‡ºçš„ Pivot è—åœ¨ high - 1 çš„ä½ç½®ï¼Œæ–¹ä¾¿å¾ŒçºŒåˆ†å‰²æŒ‡æ¨™ç§»å‹•
     swap(a[mid], a[high - 1]);
-    return a[high - 1]; // ¦^¶Ç Pivot ­È
+    return a[high - 1]; // å›å‚³ Pivot å€¼
 }
 
 void QuickSortHelper(vector<int>& a, int low, int high) {
-    // ·í¤l°}¦Cªø«×¤j©ó 2 ®É¡A¤~¨Ï¥Î¤T¼Æ¨ú¤¤ªk»PÂù«ü¼Ğ¤À³Î
+    // ç•¶å­é™£åˆ—é•·åº¦å¤§æ–¼ 2 æ™‚ï¼Œæ‰ä½¿ç”¨ä¸‰æ•¸å–ä¸­æ³•èˆ‡é›™æŒ‡æ¨™åˆ†å‰²
     if (low + 2 <= high) {
         int pivot = MedianOfThree(a, low, high);
         int i = low;
         int j = high - 1;
         while (true) {
-            while (a[++i] < pivot); // ¥ª«ü¼Ğ¦V¥k§ä¤ñ Pivot ¤jªº¼Æ
-            while (a[--j] > pivot); // ¥k«ü¼Ğ¦V¥ª§ä¤ñ Pivot ¤pªº¼Æ
-            if (i < j) swap(a[i], a[j]); // ­Y¨â«ü¼Ğ¥¼¬Û¹J¡A«h¶i¦æ¥æ´«
+            while (a[++i] < pivot); // å·¦æŒ‡æ¨™å‘å³æ‰¾æ¯” Pivot å¤§çš„æ•¸
+            while (a[--j] > pivot); // å³æŒ‡æ¨™å‘å·¦æ‰¾æ¯” Pivot å°çš„æ•¸
+            if (i < j) swap(a[i], a[j]); // è‹¥å…©æŒ‡æ¨™æœªç›¸é‡ï¼Œå‰‡é€²è¡Œäº¤æ›
             else break;
         }
-        // ±N Pivot ©ñ¦^¥¿½Tªº¤À³ÎÂI¦ì¸m
+        // å°‡ Pivot æ”¾å›æ­£ç¢ºçš„åˆ†å‰²é»ä½ç½®
         swap(a[i], a[high - 1]);
 
-        // »¼°j³B²z¥ª¥k¤l°}¦C
+        // éè¿´è™•ç†å·¦å³å­é™£åˆ—
         QuickSortHelper(a, low, i - 1);
         QuickSortHelper(a, i + 1, high);
     }
     else {
-        // ¦pªG¤l°}¦Cªø«×¤p©óµ¥©ó 2¡Aª½±µ¥Î³ÌÂ²³æªº¤ñ¸û¥æ´«³B²z
+        // å¦‚æœå­é™£åˆ—é•·åº¦å°æ–¼ç­‰æ–¼ 2ï¼Œç›´æ¥ç”¨æœ€ç°¡å–®çš„æ¯”è¼ƒäº¤æ›è™•ç†
         if (low < high && a[low] > a[high]) swap(a[low], a[high]);
     }
 }
@@ -79,29 +79,29 @@ void QuickSort(vector<int>& a) {
 }
 
 /**
- * (c) Merge Sort - ¤ÏÂĞ¦V¤Wªº­¡¥N¹ê§@ªk (Iterative Method)
+ * (c) Merge Sort - åè¦†å‘ä¸Šçš„è¿­ä»£å¯¦ä½œæ³• (Iterative Method)
  */
 void Merge(vector<int>& a, vector<int>& b, int l, int m, int r) {
     int i = l, j = m + 1, k = l;
-    // Âù«ü¼Ğ¶i¦æ¨â­Ó¤w±Æ§Ç¤l°}¦Cªº¦X¨Ö
+    // é›™æŒ‡æ¨™é€²è¡Œå…©å€‹å·²æ’åºå­é™£åˆ—çš„åˆä½µ
     while (i <= m && j <= r) {
         if (a[i] <= a[j]) b[k++] = a[i++];
         else b[k++] = a[j++];
     }
-    // ±N³Ñ¾l¨S¨«§¹ªº¤¸¯À¨Ì§Ç·h²¾¶i¼È¦s°}¦C
+    // å°‡å‰©é¤˜æ²’èµ°å®Œçš„å…ƒç´ ä¾åºæ¬ç§»é€²æš«å­˜é™£åˆ—
     while (i <= m) b[k++] = a[i++];
     while (j <= r) b[k++] = a[j++];
 
-    // ±N¦X¨Ö¦nªº¸ê®Æ½Æ»s¦^­ì°}¦C a
+    // å°‡åˆä½µå¥½çš„è³‡æ–™è¤‡è£½å›åŸé™£åˆ— a
     for (i = l; i <= r; i++) a[i] = b[i];
 }
 
 void MergeSort(vector<int>& a) {
     int n = a.size();
     if (n <= 1) return;
-    vector<int> b(n); // °t¸m»P­ì°}¦Cµ¥¤jªº¼È¦s»²§UªÅ¶¡
+    vector<int> b(n); // é…ç½®èˆ‡åŸé™£åˆ—ç­‰å¤§çš„æš«å­˜è¼”åŠ©ç©ºé–“
 
-    // size ¥Nªí¨C¦¸¦X¨Öªº¤l°}¦Cªø«× (¥H 1, 2, 4, 8... ªº­¿¼Æ¼Wªø)
+    // size ä»£è¡¨æ¯æ¬¡åˆä½µçš„å­é™£åˆ—é•·åº¦ (ä»¥ 1, 2, 4, 8... çš„å€æ•¸å¢é•·)
     for (int size = 1; size < n; size *= 2) {
         for (int l = 0; l < n - 1; l += 2 * size) {
             int m = min(l + size - 1, n - 1);
@@ -115,14 +115,14 @@ void MergeSort(vector<int>& a) {
  * (d) Heap Sort
  */
 void MaxHeapify(vector<int>& a, int n, int i) {
-    int largest = i;     // ¥ı°²³]¥Ø«eªº®Ú¸`ÂI³Ì¤j
-    int l = 2 * i + 1;   // ¥ª¤l¸`ÂI¯Á¤Ş
-    int r = 2 * i + 2;   // ¥k¤l¸`ÂI¯Á¤Ş
+    int largest = i;     // å…ˆå‡è¨­ç›®å‰çš„æ ¹ç¯€é»æœ€å¤§
+    int l = 2 * i + 1;   // å·¦å­ç¯€é»ç´¢å¼•
+    int r = 2 * i + 2;   // å³å­ç¯€é»ç´¢å¼•
 
     if (l < n && a[l] > a[largest]) largest = l;
     if (r < n && a[r] > a[largest]) largest = r;
 
-    // ¦pªG³Ì¤j­È¤£¬O®Ú¸`ÂI¡A«h±N¨ä¤U²¾¡A¨Ã½Õ¾ã¨ü¼vÅTªº¤l¾ğ
+    // å¦‚æœæœ€å¤§å€¼ä¸æ˜¯æ ¹ç¯€é»ï¼Œå‰‡å°‡å…¶ä¸‹ç§»ï¼Œä¸¦èª¿æ•´å—å½±éŸ¿çš„å­æ¨¹
     if (largest != i) {
         swap(a[i], a[largest]);
         MaxHeapify(a, n, largest);
@@ -131,21 +131,21 @@ void MaxHeapify(vector<int>& a, int n, int i) {
 
 void HeapSort(vector<int>& a) {
     int n = a.size();
-    // ¨BÆJ 1¡G«Øºc³Ì¤j°ï¿n (Build Max Heap)
+    // æ­¥é©Ÿ 1ï¼šå»ºæ§‹æœ€å¤§å †ç© (Build Max Heap)
     for (int i = n / 2 - 1; i >= 0; i--) MaxHeapify(a, n, i);
 
-    // ¨BÆJ 2¡G¤ÏÂĞ±N°ï¿n³»ºİ³Ì¤j­È²¾¨ì°}¦C¥½§À¡A¨Ã­«·s½Õ¾ã³Ñ¾l°ï¿n
+    // æ­¥é©Ÿ 2ï¼šåè¦†å°‡å †ç©é ‚ç«¯æœ€å¤§å€¼ç§»åˆ°é™£åˆ—æœ«å°¾ï¼Œä¸¦é‡æ–°èª¿æ•´å‰©é¤˜å †ç©
     for (int i = n - 1; i > 0; i--) {
         swap(a[0], a[i]);
-        MaxHeapify(a, i, 0); // ÁY´î°ï¿n¤j¤p¬° i¡A¨Ã±q³»³¡©¹¤U½Õ¾ã
+        MaxHeapify(a, i, 0); // ç¸®æ¸›å †ç©å¤§å°ç‚º iï¼Œä¸¦å¾é ‚éƒ¨å¾€ä¸‹èª¿æ•´
     }
 }
 
 
-// 3. ³ÌÃa±¡ªp¡]Worst-case¡^´ú¸Õ¸ê®Æ¥Í¦¨¾¹
+// 3. æœ€å£æƒ…æ³ï¼ˆWorst-caseï¼‰æ¸¬è©¦è³‡æ–™ç”Ÿæˆå™¨
 
 /**
- * ¥Í¦¨ Insertion Sort ªº³ÌÃa±¡ªp¸ê®Æ
+ * ç”Ÿæˆ Insertion Sort çš„æœ€å£æƒ…æ³è³‡æ–™
  */
 vector<int> GenerateInsertionWorst(int n) {
     vector<int> a(n);
@@ -154,71 +154,71 @@ vector<int> GenerateInsertionWorst(int n) {
 }
 
 /**
- * »²§U Merge Sort ³ÌÃa±¡ªp¼Æ¦Cªº°f¦V©î¤À¨ç¼Æ
+ * è¼”åŠ© Merge Sort æœ€å£æƒ…æ³æ•¸åˆ—çš„é€†å‘æ‹†åˆ†å‡½æ•¸
  */
 void Separate(vector<int>& a, vector<int>& tmp, int l, int r) {
     if (l >= r) return;
     int m = l + (r - l) / 2;
     int k = 0;
 
-    // ±N¥Ø«e¤w±Æ§Ç¦nªº¤l¼Æ¦C¡A©_¼Æ¶µ»P°¸¼Æ¶µ¤À¬y¡A¯}Ãa¨ä¥­·Æ¦X¨Öµ²ºc
+    // å°‡ç›®å‰å·²æ’åºå¥½çš„å­æ•¸åˆ—ï¼Œå¥‡æ•¸é …èˆ‡å¶æ•¸é …åˆ†æµï¼Œç ´å£å…¶å¹³æ»‘åˆä½µçµæ§‹
     for (int i = l; i <= r; i += 2) tmp[k++] = a[i];
     for (int i = l + 1; i <= r; i += 2) tmp[k++] = a[i];
     for (int i = l; i <= r; i++) a[i] = tmp[i - l];
 
-    // «ùÄò©¹¤U°f¦V©î¸Ñ
+    // æŒçºŒå¾€ä¸‹é€†å‘æ‹†è§£
     Separate(a, tmp, l, m);
     Separate(a, tmp, m + 1, r);
 }
 
 /**
- * Merge Sort ªº³ÌÃa±¡ªp¸ê®Æ
+ * Merge Sort çš„æœ€å£æƒ…æ³è³‡æ–™
  */
 vector<int> GenerateMergeWorst(int n) {
     vector<int> a(n);
     for (int i = 0; i < n; i++) a[i] = i + 1;
     vector<int> tmp(n);
-    Separate(a, tmp, 0, n - 1); // ¶}©l°f¦V¥´¶Ã
+    Separate(a, tmp, 0, n - 1); // é–‹å§‹é€†å‘æ‰“äº‚
     return a;
 }
 
-// 4. °ªºë«×­«½Æ´ú¸Õ­p®É®Ö¤ß
+// 4. é«˜ç²¾åº¦é‡è¤‡æ¸¬è©¦è¨ˆæ™‚æ ¸å¿ƒ
 /**
- * @brief ¨ú±o¥|ºØ°ò¥»±Æ§Çºtºâªkªº³ÌÃa±¡ªp®É¶¡
- * @param repetitions °ªºë«×­«½Æ¹êÅç¦¸¼Æ¡A¥Î©ó©ñ¤jµu®É¶¡±Æ§Ç¥H­°§C®ÉÄÁ»~®t
+ * @brief å–å¾—å››ç¨®åŸºæœ¬æ’åºæ¼”ç®—æ³•çš„æœ€å£æƒ…æ³æ™‚é–“
+ * @param repetitions é«˜ç²¾åº¦é‡è¤‡å¯¦é©—æ¬¡æ•¸ï¼Œç”¨æ–¼æ”¾å¤§çŸ­æ™‚é–“æ’åºä»¥é™ä½æ™‚é˜èª¤å·®
  */
 double GetWorstTime(string sortType, int n, int repetitions) {
 
-    // Ãş§O A¡G¾Ö¦³©T©w¥B¥iª½±µ«Øºcªº³ÌÃa¸ê®Æ (Insertion & Merge)
+    // é¡åˆ¥ Aï¼šæ“æœ‰å›ºå®šä¸”å¯ç›´æ¥å»ºæ§‹çš„æœ€å£è³‡æ–™ (Insertion & Merge)
     if (sortType == "Insertion" || sortType == "Merge") {
         vector<int> baseData = (sortType == "Insertion") ? GenerateInsertionWorst(n) : GenerateMergeWorst(n);
 
         auto start = chrono::high_resolution_clock::now();
         for (int r = 0; r < repetitions; r++) {
-            vector<int> testData = baseData; // ¨C¦¸±Æ§Ç«e³£­nÁÙ­ì¸ê®Æ
+            vector<int> testData = baseData; // æ¯æ¬¡æ’åºå‰éƒ½è¦é‚„åŸè³‡æ–™
             if (sortType == "Insertion") InsertionSort(testData);
             else MergeSort(testData);
         }
         auto end = chrono::high_resolution_clock::now();
         chrono::duration<double, milli> duration = end - start;
-        return duration.count() / repetitions; // ¦^¶Ç¥­§¡¨C¦¸°õ¦æªº²@¬í¼Æ (ms)
+        return duration.count() / repetitions; // å›å‚³å¹³å‡æ¯æ¬¡åŸ·è¡Œçš„æ¯«ç§’æ•¸ (ms)
     }
 
-    // Ãş§O B¡G¥Í¦¨ 15 ¦¸ÀH¾÷±Æ¦C¡A´£¨ú¨ä¡u³Ì¤j°õ¦æ®É¶¡¡v
+    // é¡åˆ¥ Bï¼šç”Ÿæˆ 15 æ¬¡éš¨æ©Ÿæ’åˆ—ï¼Œæå–å…¶ã€Œæœ€å¤§åŸ·è¡Œæ™‚é–“ã€
     if (sortType == "Quick" || sortType == "Heap") {
         double maxTime = 0.0;
-        int permutationsCount = 15; // ¶W¹L§ë¼v¤ù­n¨D¦Ü¤Ö¶] 10 ¦¸ªº³W©w
+        int permutationsCount = 15; // è¶…éæŠ•å½±ç‰‡è¦æ±‚è‡³å°‘è·‘ 10 æ¬¡çš„è¦å®š
 
         for (int p = 0; p < permutationsCount; p++) {
             vector<int> baseData(n);
             for (int i = 0; i < n; i++) baseData[i] = i;
 
-            // ¨Ï¥Î Knuth Shuffle ¾÷¨îÀH¾÷¥´¶Ã°}¦C
+            // ä½¿ç”¨ Knuth Shuffle æ©Ÿåˆ¶éš¨æ©Ÿæ‰“äº‚é™£åˆ—
             Permute(baseData, n);
 
             auto start = chrono::high_resolution_clock::now();
             for (int r = 0; r < repetitions; r++) {
-                vector<int> testData = baseData; // ¨C¦¸­p®ÉÁÙ­ì¸ê®Æ
+                vector<int> testData = baseData; // æ¯æ¬¡è¨ˆæ™‚é‚„åŸè³‡æ–™
                 if (sortType == "Quick") QuickSort(testData);
                 else HeapSort(testData);
             }
@@ -226,7 +226,7 @@ double GetWorstTime(string sortType, int n, int repetitions) {
             chrono::duration<double, milli> duration = end - start;
             double currentAvgTime = duration.count() / repetitions;
 
-            // ®·®»³o 15 ¦¸±Æ¦C¤¤¡A³ÌºC¡B¯Ó®É³Ìªøªº¼Æ¾Ú¡]¥H¦¹¹Gªñ³ÌÃa±¡ªp®É¶¡¡^
+            // æ•æ‰é€™ 15 æ¬¡æ’åˆ—ä¸­ï¼Œæœ€æ…¢ã€è€—æ™‚æœ€é•·çš„æ•¸æ“šï¼ˆä»¥æ­¤é€¼è¿‘æœ€å£æƒ…æ³æ™‚é–“ï¼‰
             if (currentAvgTime > maxTime) maxTime = currentAvgTime;
         }
         return maxTime;
@@ -235,24 +235,24 @@ double GetWorstTime(string sortType, int n, int repetitions) {
 }
 
 /*
- * Composite Sort¡G¥»§@·~ªº³Ì²×¥Ø¼Ğ®Ö¤ß¡C
- * ³W«h¡G¦b³ÌÃa±¡ªp¦Ò¶q¤U¡A¤p©óÁ{¬É­È 20 ¨Ï¥Î Insertion Sort¡A¤j©óµ¥©ó 20 «h¨Ï¥Î Heap Sort¡C
+ * Composite Sortï¼šæœ¬ä½œæ¥­çš„æœ€çµ‚ç›®æ¨™æ ¸å¿ƒã€‚
+ * è¦å‰‡ï¼šåœ¨æœ€å£æƒ…æ³è€ƒé‡ä¸‹ï¼Œå°æ–¼è‡¨ç•Œå€¼ 20 ä½¿ç”¨ Insertion Sortï¼Œå¤§æ–¼ç­‰æ–¼ 20 å‰‡ä½¿ç”¨ Heap Sortã€‚
  */
 void CompositeSort(vector<int>& a) {
     int n = a.size();
     if (n < 20) {
-        InsertionSort(a); // ¤p¸ê®Æ¶°¤U¡AInsertion Sort ªº±`¼Æ¤p¡B§KÃB¥~°O¾ĞÅé¡A®Ä²v§ó¨Î
+        InsertionSort(a); // å°è³‡æ–™é›†ä¸‹ï¼ŒInsertion Sort çš„å¸¸æ•¸å°ã€å…é¡å¤–è¨˜æ†¶é«”ï¼Œæ•ˆç‡æ›´ä½³
     }
     else {
-        HeapSort(a);      // ¤j¸ê®Æ¶°¤U¡A¦º«r¦í O(n log n) Ãä¬É¨¾¤î°h¤Æ
+        HeapSort(a);      // å¤§è³‡æ–™é›†ä¸‹ï¼Œæ­»å’¬ä½ O(n log n) é‚Šç•Œé˜²æ­¢é€€åŒ–
     }
 }
 
 /*
- * ¶q´ú Composite Sort ªº³ÌÃa±¡ªp°õ¦æ®É¶¡
+ * é‡æ¸¬ Composite Sort çš„æœ€å£æƒ…æ³åŸ·è¡Œæ™‚é–“
  */
 double GetCompositeTime(int n, int repetitions) {
-    // ¬°¤F¦Ò¶q¥i¯àÄ²µo Insertion ªº¥­¤è¥N»ù¡A§Ú­Ì°ò©ó§¹¥ş°f§Ç§@¬°·¥ºİ¸ê®Æªº´ú¸Õ
+    // ç‚ºäº†è€ƒé‡å¯èƒ½è§¸ç™¼ Insertion çš„å¹³æ–¹ä»£åƒ¹ï¼Œæˆ‘å€‘åŸºæ–¼å®Œå…¨é€†åºä½œç‚ºæ¥µç«¯è³‡æ–™çš„æ¸¬è©¦
     vector<int> baseData = GenerateInsertionWorst(n);
     auto start = chrono::high_resolution_clock::now();
     for (int r = 0; r < repetitions; r++) {
@@ -264,23 +264,22 @@ double GetCompositeTime(int n, int repetitions) {
     return duration.count() / repetitions;
 }
 
-// 5. ¥Dµ{¦¡¡G¤ä´©§å¦¸¦h­«¿é¤J¡A¶°¤¤¿é¥Xºë·Ç³øªí
 int main() {
-    srand(time(0)); // ªì©l¤ÆÀH¾÷¼ÆºØ¤l
+    srand(time(0)); // åˆå§‹åŒ–éš¨æ©Ÿæ•¸ç¨®å­
     int count;
 
-    cout << "´X­Ó n ";
+    cout << "å¹¾å€‹ n ";
     if (!(cin >> count) || count <= 0) return 0;
 
     vector<int> n_values(count);
-    cout << "¤@¦¸¿é¤J³o " << count << " ­Ó n ­È : \n";
+    cout << "ä¸€æ¬¡è¼¸å…¥é€™ " << count << " å€‹ n å€¼ : \n";
     for (int i = 0; i < count; i++) {
         cin >> n_values[i];
     }
 
-    cout << "\n°õ¦æ¤¤\n\n";
+    cout << "\nåŸ·è¡Œä¸­\n\n";
 
-    // ©w¸qÀx¦sªí®æ¨C¤@¾î¦C¸ê®Æªºµ²ºcÅé
+    // å®šç¾©å„²å­˜è¡¨æ ¼æ¯ä¸€æ©«åˆ—è³‡æ–™çš„çµæ§‹é«”
     struct RowData {
         int n;
         double insertion, quick, merge, heap, composite;
@@ -288,7 +287,7 @@ int main() {
     vector<RowData> resultTable;
 
     for (int n : n_values) {
-        // ´¼¼z«¬­«½Æ¦¸¼Æ·L½Õ¡G
+        // æ™ºæ…§å‹é‡è¤‡æ¬¡æ•¸å¾®èª¿ï¼š
         int reps = 20;
         if (n <= 100) reps = 500;
         else if (n <= 1000) reps = 100;
@@ -302,10 +301,10 @@ int main() {
         data.heap = GetWorstTime("Heap", n, reps);
         data.composite = GetCompositeTime(n, reps);
 
-        resultTable.push_back(data); // ¥á¶i°O¾Ğ®w
+        resultTable.push_back(data); // ä¸Ÿé€²è¨˜æ†¶åº«
     }
     cout << "========================================================================================\n";
-    cout << "                    ºtºâªk¹êÅç¡G³ÌÃa±¡ªp°õ¦æ®É¶¡¡]³æ¦ì¡G²@¬í¡^\n";
+    cout << "                    æ¼”ç®—æ³•å¯¦é©—ï¼šæœ€å£æƒ…æ³åŸ·è¡Œæ™‚é–“ï¼ˆå–®ä½ï¼šæ¯«ç§’ï¼‰\n";
     cout << "========================================================================================\n";
 
     cout << left << setw(10) << "n"
@@ -316,7 +315,7 @@ int main() {
         << setw(18) << "Composite" << "\n";
     cout << "----------------------------------------------------------------------------------------\n";
 
-    // ¨Ì§Ç­Ë¥X°O¾Ğ®w¸Ìªº¦¨ªG¼Æ¾Ú
+    // ä¾åºå€’å‡ºè¨˜æ†¶åº«è£¡çš„æˆæœæ•¸æ“š
     for (const auto& row : resultTable) {
         cout << left << setw(10) << row.n
             << setw(18) << row.insertion
