@@ -1,182 +1,207 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <list>   
+#include <list> 
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <climits>
+
 using namespace std;
 
-#define BigNum INTMAX_MAX
+#define BigNum INT_MAX
 
-class Graph   //基本的模板
-{
+// ==========================================
+// 1. 基底類別 Graph
+// ==========================================
+class Graph {
 protected:
-    int n;                                          //頂點數
-    int e;                                          //邊數
+    int n; // 頂點數
+    int e; // 邊數
 
 public:
-    virtual ~Graph(){};
-    bool IsEmpty()const{return n==0;}
+    Graph() : n(0), e(0) {}
+    virtual ~Graph() {}
+    bool IsEmpty() const { return n == 0; }
+    int NumberOfVertices() const { return n; }
+    int NumberOfEdges() const { return e; }
 
-    int NumberOfVertices()const{return n;}
-    int NumberOfEdges()const{return e;}
-
-    virtual int Degree(int u)const=0;
-    virtual bool ExistsEdge(int u,int v)const=0;
-    virtual void InsertVertex(int v)=0;   
-    virtual void InsertEdge(int u,int v,int cost)=0;
-    virtual void DeleteVertex(int v)=0;
-    virtual void DeleteEdge(int u,int v)=0;
+    virtual int Degree(int u) const = 0;
+    virtual bool ExistsEdge(int u, int v) const = 0;
+    virtual void InsertVertex(int v) = 0;   
+    virtual void InsertEdge(int u, int v, int cost) = 0; // 統一改為 3 個參數
+    virtual void DeleteVertex(int v) = 0;
+    virtual void DeleteEdge(int u, int v) = 0;
 };
 
-class AdjacencyMatrix: public Graph   //相鄰陣列
-{
+// ==========================================
+// 2. 相鄰矩陣 AdjacencyMatrix
+// ==========================================
+class AdjacencyMatrix : public Graph {
 private:
     vector<vector<int>> matrix;
-    map<int, int> maap;         //對應頂點 ID 到矩陣索引 (0, 1, 2...)
+    map<int, int> maap; // 頂點 ID 到矩陣索引 (0, 1, 2...) 的映射
+
 public:
-    AdjacencyMatrix()
-    {
-        n=0;  
-        e=0;
-        matrix.assign(n, vector<int>(n, BigNum));
-
+    AdjacencyMatrix() {
+        n = 0;  
+        e = 0;
     }
+    ~AdjacencyMatrix() override {}
 
-    ~AdjacencyMatrix(){}
-
-    int Degree(int u)const override
-    {
-        int count;
-        for(int i=0;i<n;i++)
-        {
-            if(matrix[u][i]==1)count++;
+    int Degree(int u) const override {
+        auto it = maap.find(u);
+        if (it == maap.end()) return 0;
+        int idx = it->second;
+        int count = 0; // 修正：初始化變數
+        for (int i = 0; i < n; i++) {
+            if (matrix[idx][i] != BigNum && matrix[idx][i] != 0) count++;
         }
         return count;
     }
 
-    bool ExistsEdge(int u,int v)const override
-    {
-        return matrix[u][v]==1;
+    bool ExistsEdge(int u, int v) const override {
+        auto it_u = maap.find(u);
+        auto it_v = maap.find(v);
+        if (it_u == maap.end() || it_v == maap.end()) return false;
+        return matrix[it_u->second][it_v->second] != BigNum;
     }
 
-   void InsertVertex(int v) override         // 插入 vertex
-    {
-        if (maap.find(v) == maap.end())       // 找不到v 代表v不存在 要新增
-        {
-            // 1. 原本的每一列（舊頂點），都在尾端補上一個 BigNum，代表它們跟新點不連通
+    void InsertVertex(int v) override {
+        if (maap.find(v) == maap.end()) {
             for (int i = 0; i < n; i++) {
                 matrix[i].push_back(BigNum);
             }
-            
-            // 2. 建立映射：把頂點編號 v 對應到目前的矩陣索引 n
             maap[v] = n; 
-            
-            // 頂點數量加 1
             n++;
-            
-            // 3. 新增全新的一列（代表新點到所有人的距離）
-            // 預設全部填 BigNum
             vector<int> newRow(n, BigNum);
-            // 自己到自己的距離要設為 0
             newRow[n - 1] = 0; 
-            
             matrix.push_back(newRow);
         } 
     }
 
-    virtual void InsertEdge(int u, int v, int cost) override  // 插入 edge
-    {   
-    // 1. 先檢查這兩個頂點在 map 裡存不存在
-    if (maap.find(u) == maap.end() || maap.find(v) == maap.end()) {
-        return; // 如果有點不存在，就直接結束不處理
+    void InsertEdge(int u, int v, int cost) override {   
+        if (maap.find(u) == maap.end() || maap.find(v) == maap.end()) return;
+        int idx_u = maap[u];
+        int idx_v = maap[v];
+        matrix[idx_u][idx_v] = cost;
+        e++;
     }
 
-    // 2. 透過 map 轉換：把頂點編號轉成矩陣的真正的 index
-    int idx_u = maap[u];
-    int idx_v = maap[v];
-
-    // 3. 填入權重
-    matrix[idx_u][idx_v] = cost;
-    
-    // 如果是「無向圖」，反向也要填喔！
-    // matrix[idx_v][idx_u] = cost; 
-
-    e++; // 邊的數量加 1
-    }
-
-    virtual void DeleteVertex(int v) override
-    {   
-    // 1. 安全檢查：如果點根本不存在，直接結束
-    if (maap.find(v) == maap.end()) return;
-
-    int indx = maap[v];
-    int edgesToDelete = 0;
-    
-    // 2. 算一下這個頂點到底連了幾條邊（看它要刪除的那一列）
-    // 只要不是無限大(BigNum)，且不是自己到自己(0)，就代表有一條邊
-    for (int j = 0; j < n; j++) {
-        if (matrix[indx][j] != BigNum && matrix[indx][j] != 0) {
-            edgesToDelete++;
+    void DeleteVertex(int v) override {   
+        if (maap.find(v) == maap.end()) return;
+        int indx = maap[v];
+        int edgesToDelete = 0;
+        
+        for (int j = 0; j < n; j++) {
+            if (matrix[indx][j] != BigNum && matrix[indx][j] != 0) {
+                edgesToDelete++;
+            }
         }
-    }
-    
-    // 3. 開始刪除記憶體結構
-    matrix.erase(matrix.begin() + indx);  // 刪除第 indx 列 (Row)
-    
-    // 注意：因為上一行已經把 matrix 的長度減 1 了，所以現在的矩陣列數是 n-1
-    for (int i = 0; i < n - 1; i++) {
-        matrix[i].erase(matrix[i].begin() + indx);  // 刪除每一列的第 indx 個元素 (Column)
-    }
-    
-    // 4. 更新字典（後面的 index 要全部往前一格
-    for (auto it = maap.begin(); it != maap.end(); ++it)
-    {
-        if (it->second > indx)
-        {
-            it->second -= 1; 
+        
+        matrix.erase(matrix.begin() + indx);
+        for (int i = 0; i < n - 1; i++) {
+            matrix[i].erase(matrix[i].begin() + indx);
         }
+        
+        for (auto it = maap.begin(); it != maap.end(); ++it) {
+            if (it->second > indx) it->second -= 1; 
+        }
+        
+        n--;
+        e -= edgesToDelete;
+        maap.erase(v);
     }
-    
-    // 5. 更新圖的統計數據
-    n--;            // 頂點數 - 1
-    e -= edgesToDelete; // 扣掉實際刪除的邊數
-    maap.erase(v);  // 把這個點從 map 裡徹底移除
-}
 
-    virtual void DeleteEdge(int u,int v)override
-    {
-        matrix[u][v]=BigNum;
-        e--;
+    void DeleteEdge(int u, int v) override {
+        auto it_u = maap.find(u);
+        auto it_v = maap.find(v);
+        if (it_u != maap.end() && it_v != maap.end()) {
+            matrix[it_u->second][it_v->second] = BigNum;
+            e--;
+        }
     }
 };
 
-class node 
-{
+// ==========================================
+// 3. 相鄰串列 AdjacencyList (內含五大基本操作)
+// ==========================================
+class node {
 public:
     int data;
     node* nex; 
-
-    node(int d):data(d),nex(nullptr){}
-    
+    node(int d) : data(d), nex(nullptr) {}
 };
 
-
-bool check(vector<node*>& a, int b) {
-    for (int i = 0; i < a.size(); i++) {
-        
-        if (a[i] != nullptr && a[i]->data == b) return true;
-    }
-    return false;
-}
-
-class AdjacencyList : public Graph {   //相鄰串列
+class AdjacencyList : public Graph {
 private:
     vector<node*> liss; 
+
+    // DFS 輔助函式
+    void DFSUtil(int v, vector<bool>& visited) const {
+        visited[v] = true;
+        cout << v << " ";
+        node* curr = liss[v];
+        while (curr) {
+            if (!visited[curr->data]) {
+                DFSUtil(curr->data, visited);
+            }
+            curr = curr->nex;
+        }
+    }
+
+    // Spanning Tree 輔助函式
+    void SpanningTreeUtil(int v, vector<bool>& visited) const {
+        visited[v] = true;
+        node* curr = liss[v];
+        while (curr) {
+            if (!visited[curr->data]) {
+                cout << "(" << v << ", " << curr->data << ") ";
+                SpanningTreeUtil(curr->data, visited);
+            }
+            curr = curr->nex;
+        }
+    }
+
+    // BCC Tarjan 演算法輔助函式
+    void BCCUtil(int u, int& time, vector<int>& dfn, vector<int>& low, 
+                 vector<int>& parent, stack<pair<int, int>>& st) const {
+        dfn[u] = low[u] = ++time;
+        int children = 0;
+        node* curr = liss[u];
+
+        while (curr) {
+            int v = curr->data;
+            if (dfn[v] == 0) {
+                children++;
+                parent[v] = u;
+                st.push({u, v});
+
+                BCCUtil(v, time, dfn, low, parent, st);
+                low[u] = min(low[u], low[v]);
+
+                if ((parent[u] == -1 && children > 1) || (parent[u] != -1 && low[v] >= dfn[u])) {
+                    cout << "  BCC 邊集合: ";
+                    while (st.top().first != u || st.top().second != v) {
+                        cout << "(" << st.top().first << "," << st.top().second << ") ";
+                        st.pop();
+                    }
+                    cout << "(" << st.top().first << "," << st.top().second << ")\n";
+                    st.pop();
+                }
+            } 
+            else if (v != parent[u] && dfn[v] < dfn[u]) {
+                low[u] = min(low[u], dfn[v]);
+                st.push({u, v});
+            }
+            curr = curr->nex;
+        }
+    }
 
 public:
     AdjacencyList() { n = 0; e = 0; }
     
-    // 解構子：釋放所有 new 出來的 node，避免記憶體洩漏
-    ~AdjacencyList() {
+    ~AdjacencyList() override {
         for (node* head : liss) {
             while (head) {
                 node* temp = head;
@@ -208,36 +233,31 @@ public:
     }
 
     void InsertVertex(int v) override {
-        // v作為索引，如果超出範圍就 resize
         if (v >= liss.size()) {
             liss.resize(v + 1, nullptr);
             n++;
         }
     }
 
-    void InsertEdge(int u, int v) override {
+    void InsertEdge(int u, int v, int cost = 1) override { // 修正：符合基底類別參數
         if (u >= liss.size() || v >= liss.size()) return;
-        if (ExistsEdge(u, v)) return; // 避免重複插入相同的邊
+        if (ExistsEdge(u, v)) return;
 
         node* newNode = new node(v);
-        
         newNode->nex = liss[u];
         liss[u] = newNode;
         e++;
     }
 
-    // 刪除邊 (u, v)
     void DeleteEdge(int u, int v) override {
         if (u < 0 || u >= liss.size()) return;
-
         node* curr = liss[u];
         node* prev = nullptr;
 
         while (curr) {
             if (curr->data == v) {
-                if (!prev) liss[u] = curr->nex; // 刪除的是頭
-                else prev->nex = curr->nex;      // 刪除的是中間或尾巴
-                
+                if (!prev) liss[u] = curr->nex;
+                else prev->nex = curr->nex; 
                 delete curr;
                 e--;
                 return;
@@ -247,11 +267,8 @@ public:
         }
     }
 
-    // 刪除頂點 v
     void DeleteVertex(int v) override {
         if (v < 0 || v >= liss.size()) return;
-
-        // 1. 釋放頂點 v 指向的所有鄰居節點
         node* curr = liss[v];
         while (curr) {
             node* temp = curr;
@@ -261,91 +278,113 @@ public:
         }
         liss[v] = nullptr;
 
-        // 2. 遍歷其他所有頂點，刪除指向 v 的邊
         for (int i = 0; i < liss.size(); i++) {
             if (i == v) continue;
             DeleteEdge(i, v); 
         }
         n--;
     }
+
+    // --- 擴充功能實作 ---
+    
+    // 1. Depth First Search (DFS)
+    void DFS(int startVertex) const {
+        if (startVertex < 0 || startVertex >= liss.size()) return;
+        vector<bool> visited(liss.size(), false);
+        cout << "DFS 走訪順序: ";
+        DFSUtil(startVertex, visited);
+        cout << endl;
+    }
+
+    // 2. Breadth First Search (BFS)
+    void BFS(int startVertex) const {
+        if (startVertex < 0 || startVertex >= liss.size()) return;
+        vector<bool> visited(liss.size(), false);
+        queue<int> q;
+
+        visited[startVertex] = true;
+        q.push(startVertex);
+
+        cout << "BFS 走訪順序: ";
+        while (!q.empty()) {
+            int v = q.front();
+            q.pop();
+            cout << v << " ";
+
+            node* curr = liss[v];
+            while (curr) {
+                if (!visited[curr->data]) {
+                    visited[curr->data] = true;
+                    q.push(curr->data);
+                }
+                curr = curr->nex;
+            }
+        }
+        cout << endl;
+    }
+
+    // 3. Connected Components
+    void ConnectedComponents() const {
+        vector<bool> visited(liss.size(), false);
+        int count = 0;
+        cout << "--- 連通元件列表 ---\n";
+        for (int i = 0; i < liss.size(); i++) {
+            if (!visited[i] && (liss[i] != nullptr || Degree(i) > 0)) {
+                cout << "元件 " << ++count << ": ";
+                DFSUtil(i, visited);
+                cout << endl;
+            }
+        }
+    }
+
+    // 4. Spanning Trees
+    void SpanningTree(int startVertex) const {
+        if (startVertex < 0 || startVertex >= liss.size()) return;
+        vector<bool> visited(liss.size(), false);
+        cout << "DFS 生成樹邊集合: ";
+        SpanningTreeUtil(startVertex, visited);
+        cout << endl;
+    }
+
+    // 5. Biconnected Components (BCC)
+    void BiconnectedComponents() const {
+        int V = liss.size();
+        vector<int> dfn(V, 0), low(V, 0), parent(V, -1);
+        stack<pair<int, int>> st;
+        int time = 0;
+
+        cout << "--- 雙連通元件 (BCC) 列表 ---\n";
+        for (int i = 0; i < V; i++) {
+            if (dfn[i] == 0 && (liss[i] != nullptr || Degree(i) > 0)) {
+                BCCUtil(i, time, dfn, low, parent, st);
+                
+                if (!st.empty()) {
+                    cout << "  BCC 邊集合: ";
+                    while (!st.empty()) {
+                        cout << "(" << st.top().first << "," << st.top().second << ") ";
+                        st.pop();
+                    }
+                    cout << endl;
+                }
+            }
+        }
+    }
 };
 
+// ==========================================
+// 4. 相鄰多重串列 AdjacencyMultilist
+// ==========================================
 struct Edge {
-    bool mark;          // 標記是否被走訪過
-    int v1, v2;         // 這條邊連接的兩個頂點
-    Edge *path1, *path2; // path1 是 v1 的下一條邊，path2 是 v2 的下一條邊
-
+    bool mark;          
+    int v1, v2;         
+    Edge *path1, *path2; 
     Edge(int u, int v) : mark(false), v1(u), v2(v), path1(nullptr), path2(nullptr) {}
 };
 
-class AdjacencyMultilist : public Graph {       //相鄰多重串列
+class AdjacencyMultilist : public Graph {       
 private:
-    vector<Edge*> head; // 每個頂點的第一條邊
+    vector<Edge*> head; 
 
-public:
-    AdjacencyMultilist(int vertices = 0) {
-        n = vertices; e = 0;
-        head.assign(n, nullptr);
-    }
-
-    // 插入頂點
-    void InsertVertex(int v) override {
-        if (v >= head.size()) {
-            head.resize(v + 1, nullptr);
-            n++;
-        }
-    }
-
-    // 插入邊 (u, v)
-    void InsertEdge(int u, int v) override {
-        if (u >= head.size() || v >= head.size()) return;
-        
-        // 1. 產生一個唯一的邊節點
-        Edge* newEdge = new Edge(u, v);
-
-        // 2. 處理 u 的鏈結：插在 u 的串列最前面
-        newEdge->path1 = head[u];
-        head[u] = newEdge;
-
-        // 3. 處理 v 的鏈結：插在 v 的串列最前面
-        newEdge->path2 = head[v];
-        head[v] = newEdge;
-
-        e++;
-    }
-
-    // 檢查邊是否存在
-    bool ExistsEdge(int u, int v) const override {
-        Edge* curr = head[u];
-        while (curr != nullptr) {
-            if ((curr->v1 == u && curr->v2 == v) || (curr->v1 == v && curr->v2 == u)) {
-                return true;
-            }
-            // 判斷下一條邊要跟著 path1 還是 path2 走
-            curr = (curr->v1 == u) ? curr->path1 : curr->path2;
-        }
-        return false;
-    }
-
-    // 計算頂點的度數
-    int Degree(int u) const override {
-        int count = 0;
-        Edge* curr = head[u];
-        while (curr != nullptr) {
-            count++;
-            curr = (curr->v1 == u) ? curr->path1 : curr->path2;
-        }
-        return count;
-    }
-
-    // 刪除邊 (邏輯較複雜，需考慮 prev 指標)
-    void DeleteEdge(int u, int v) override {
-        head[u] = helperDelete(u, v, head[u]);
-        head[v] = helperDelete(v, u, head[v]);
-        e--; // 注意：因為 helperDelete 會被叫兩次，e-- 只能在這裡執行一次
-    }
-
-    // 輔助刪除邏輯
     Edge* helperDelete(int target, int peer, Edge* currentHead) {
         Edge* curr = currentHead;
         Edge* prev = nullptr;
@@ -353,9 +392,8 @@ public:
         while (curr != nullptr) {
             if ((curr->v1 == target && curr->v2 == peer) || (curr->v1 == peer && curr->v2 == target)) {
                 Edge* nextInChain = (curr->v1 == target) ? curr->path1 : curr->path2;
-                if (prev == nullptr) return nextInChain; // 刪除的是頭
+                if (prev == nullptr) return nextInChain; 
                 
-                // 將前一個節點的正確 path 指向下一位
                 if (prev->v1 == target) prev->path1 = nextInChain;
                 else prev->path2 = nextInChain;
                 
@@ -367,33 +405,125 @@ public:
         return currentHead;
     }
 
+public:
+    AdjacencyMultilist(int vertices = 0) {
+        n = vertices; e = 0;
+        head.assign(n, nullptr);
+    }
+
+    void InsertVertex(int v) override {
+        if (v >= head.size()) {
+            head.resize(v + 1, nullptr);
+            n++;
+        }
+    }
+
+    void InsertEdge(int u, int v, int cost = 1) override { // 修正：符合基底類別參數
+        if (u >= head.size() || v >= head.size()) return;
+        
+        Edge* newEdge = new Edge(u, v);
+        newEdge->path1 = head[u];
+        head[u] = newEdge;
+        newEdge->path2 = head[v];
+        head[v] = newEdge;
+        e++;
+    }
+
+    bool ExistsEdge(int u, int v) const override {
+        if (u >= head.size()) return false;
+        Edge* curr = head[u];
+        while (curr != nullptr) {
+            if ((curr->v1 == u && curr->v2 == v) || (curr->v1 == v && curr->v2 == u)) {
+                return true;
+            }
+            curr = (curr->v1 == u) ? curr->path1 : curr->path2;
+        }
+        return false;
+    }
+
+    int Degree(int u) const override {
+        if (u >= head.size()) return 0;
+        int count = 0;
+        Edge* curr = head[u];
+        while (curr != nullptr) {
+            count++;
+            curr = (curr->v1 == u) ? curr->path1 : curr->path2;
+        }
+        return count;
+    }
+
+    void DeleteEdge(int u, int v) override {
+        if (u >= head.size() || v >= head.size()) return;
+        
+        // 先找出該 Edge 節點指標，最後釋放記憶體
+        Edge* targetEdge = nullptr;
+        Edge* curr = head[u];
+        while (curr != nullptr) {
+            if ((curr->v1 == u && curr->v2 == v) || (curr->v1 == v && curr->v2 == u)) {
+                targetEdge = curr;
+                break;
+            }
+            curr = (curr->v1 == u) ? curr->path1 : curr->path2;
+        }
+
+        head[u] = helperDelete(u, v, head[u]);
+        head[v] = helperDelete(v, u, head[v]);
+        
+        if (targetEdge) {
+            delete targetEdge; // 修正：避免記憶體洩漏
+            e--;
+        }
+    }
+
     void DeleteVertex(int v) override {
-        // 先刪除所有與 v 相關的邊
+        if (v >= head.size()) return;
         Edge* curr = head[v];
         while (curr != nullptr) {
             int peer = (curr->v1 == v) ? curr->v2 : curr->v1;
             Edge* next = (curr->v1 == v) ? curr->path1 : curr->path2;
-            DeleteEdge(v, peer); // 這裡會處理 delete 記憶體
+            DeleteEdge(v, peer); 
             curr = next;
         }
         n--;
     }
 };
 
+// ==========================================
+// 5. 測試主程式 main()
+// ==========================================
+int main() {
+    AdjacencyList adjList;
 
+    // 建立 0 到 5 號頂點
+    for (int i = 0; i <= 5; i++) {
+        adjList.InsertVertex(i);
+    }
 
-int main()
-{   
-    int a,b;
-    /*
-    假設輸入是
-    1 2 3 4 //頂點
-    1 2 2 3 3 4 4 1  //邊
-    */
+    // 建立無向圖邊結構 (雙向插入)
+    // 元件 1: 包含 0, 1, 2, 3, 4 (其中 1 為關切點)
+    adjList.InsertEdge(0, 1); adjList.InsertEdge(1, 0);
+    adjList.InsertEdge(1, 2); adjList.InsertEdge(2, 1);
+    adjList.InsertEdge(2, 0); adjList.InsertEdge(0, 2);
+    adjList.InsertEdge(1, 3); adjList.InsertEdge(3, 1);
+    adjList.InsertEdge(3, 4); adjList.InsertEdge(4, 3);
+    adjList.InsertEdge(4, 1); adjList.InsertEdge(1, 4);
+
+    // 元件 2: 孤立點 5
+    // 頂點 5 沒有連向任何人
+
+    // --- 測試五大操作 ---
+    cout << "=== 圖形基本操作測試 (以頂點 0 開始) ===" << endl;
+    adjList.DFS(0);
+    adjList.BFS(0);
     
-    AdjacencyMatrix adj;
-    while(cin>>a){ adj.InsertVertex(a);}
-    while(cin>>a>>b)adj.InsertEdge(a,b);
-    cout<<BigNum;
+    cout << endl;
+    adjList.ConnectedComponents();
+    
+    cout << endl;
+    adjList.SpanningTree(0);
+    
+    cout << endl;
+    adjList.BiconnectedComponents();
 
+    return 0;
 }
