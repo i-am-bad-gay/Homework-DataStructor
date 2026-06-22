@@ -20,18 +20,18 @@ protected:
     int e; // 邊數
 
 public:
-    Graph() : n(0), e(0) {}
+    Graph() : n(0), e(0) {}  //n 和 e 的初始值都設為 0 是頂點和邊的數量初始狀態
     virtual ~Graph() {}
-    bool IsEmpty() const { return n == 0; }
-    int NumberOfVertices() const { return n; }
-    int NumberOfEdges() const { return e; }
+    bool IsEmpty() const { return n == 0; } // 圖是否為空 (沒有頂點)
+    int NumberOfVertices() const { return n; } // 圖中頂點的數量
+    int NumberOfEdges() const { return e; } // 圖中邊的數量
 
-    virtual int Degree(int u) const = 0;
-    virtual bool ExistsEdge(int u, int v) const = 0;
-    virtual void InsertVertex(int v) = 0;   
+    virtual int Degree(int u) const = 0; // 純虛擬函式：回傳頂點 u 的度數
+    virtual bool ExistsEdge(int u, int v) const = 0; // 純虛擬函式：檢查是否存在從 u 到 v 的邊
+    virtual void InsertVertex(int v) = 0;    //  純虛擬函式：插入頂點 v
     virtual void InsertEdge(int u, int v, int cost) = 0; // 統一改為 3 個參數
-    virtual void DeleteVertex(int v) = 0;
-    virtual void DeleteEdge(int u, int v) = 0;
+    virtual void DeleteVertex(int v) = 0; // 純虛擬函式：刪除頂點 v
+    virtual void DeleteEdge(int u, int v) = 0; // 純虛擬函式：刪除從 u 到 v 的邊
 };
 
 // ==========================================
@@ -52,23 +52,24 @@ public:
     int Degree(int u) const override {
         auto it = maap.find(u);
         if (it == maap.end()) return 0;
-        int idx = it->second;
+        int idx = it->second; // second 是對應的map索引
         int count = 0; // 修正：初始化變數
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) { // 遍歷該行，計算與其他頂點的連接數
             if (matrix[idx][i] != BigNum && matrix[idx][i] != 0) count++;
         }
         return count;
     }
 
-    bool ExistsEdge(int u, int v) const override {
+    bool ExistsEdge(int u, int v) const override { // 檢查是否存在從 u 到 v 的邊
         auto it_u = maap.find(u);
         auto it_v = maap.find(v);
         if (it_u == maap.end() || it_v == maap.end()) return false;
         return matrix[it_u->second][it_v->second] != BigNum;
     }
 
-    void InsertVertex(int v) override {
-        if (maap.find(v) == maap.end()) {
+    void InsertVertex(int v) override { // 插入頂點 v
+        if (maap.find(v) == maap.end()) {   // 如果頂點 v 不存在，才進行插入
+             // 為新頂點分配一行和一列，並初始化為 BigNum（表示無邊）
             for (int i = 0; i < n; i++) {
                 matrix[i].push_back(BigNum);
             }
@@ -76,35 +77,35 @@ public:
             n++;
             vector<int> newRow(n, BigNum);
             newRow[n - 1] = 0; 
-            matrix.push_back(newRow);
+            matrix.push_back(newRow); 
         } 
     }
 
     void InsertEdge(int u, int v, int cost) override {   
-        if (maap.find(u) == maap.end() || maap.find(v) == maap.end()) return;
+        if (maap.find(u) == maap.end() || maap.find(v) == maap.end()) return; // 確保 u 和 v 都存在於圖中
         int idx_u = maap[u];
         int idx_v = maap[v];
-        matrix[idx_u][idx_v] = cost;
+        matrix[idx_u][idx_v] = cost; // 設定從 u 到 v 的邊的權重（cost）
         e++;
     }
 
     void DeleteVertex(int v) override {   
-        if (maap.find(v) == maap.end()) return;
+        if (maap.find(v) == maap.end()) return; // 確保頂點 v 存在於圖中
         int indx = maap[v];
         int edgesToDelete = 0;
         
-        for (int j = 0; j < n; j++) {
+        for (int j = 0; j < n; j++) { // 計算與該頂點相關的邊數，以便更新邊的計數器
             if (matrix[indx][j] != BigNum && matrix[indx][j] != 0) {
                 edgesToDelete++;
             }
         }
         
-        matrix.erase(matrix.begin() + indx);
+        matrix.erase(matrix.begin() + indx); // 刪除該頂點對應的行
         for (int i = 0; i < n - 1; i++) {
             matrix[i].erase(matrix[i].begin() + indx);
         }
         
-        for (auto it = maap.begin(); it != maap.end(); ++it) {
+        for (auto it = maap.begin(); it != maap.end(); ++it) { // 更新 maap 中其他頂點的索引，因為刪除一行和一列後，後面的索引都會減 1
             if (it->second > indx) it->second -= 1; 
         }
         
@@ -116,15 +117,15 @@ public:
     void DeleteEdge(int u, int v) override {
         auto it_u = maap.find(u);
         auto it_v = maap.find(v);
-        if (it_u != maap.end() && it_v != maap.end()) {
-            matrix[it_u->second][it_v->second] = BigNum;
+        if (it_u != maap.end() && it_v != maap.end()) { 
+            matrix[it_u->second][it_v->second] = BigNum; // 將從 u 到 v 的邊的權重重置為 BigNum，表示刪除該邊
             e--;
         }
     }
 };
 
 // ==========================================
-// 3. 相鄰串列 AdjacencyList (內含五大基本操作)
+// 3. 相鄰串列 AdjacencyList 
 // ==========================================
 class node {
 public:
@@ -138,11 +139,11 @@ private:
     vector<node*> liss; 
 
     // DFS 輔助函式
-    void DFSUtil(int v, vector<bool>& visited) const {
-        visited[v] = true;
+    void DFSUtil(int v, vector<bool>& visited) const {  // 從 v 出發，把所有能走到的點一路走到底
+        visited[v] = true; //標記已走過
         cout << v << " ";
         node* curr = liss[v];
-        while (curr) {
+        while (curr) { // 走訪 v 的鄰接串列，對每個鄰接點如果沒走過就繼續往下走
             if (!visited[curr->data]) {
                 DFSUtil(curr->data, visited);
             }
@@ -151,21 +152,21 @@ private:
     }
 
     // Spanning Tree 輔助函式
-    void SpanningTreeUtil(int v, vector<bool>& visited) const {
-        visited[v] = true;
-        node* curr = liss[v];
-        while (curr) {
-            if (!visited[curr->data]) {
-                cout << "(" << v << ", " << curr->data << ") ";
-                SpanningTreeUtil(curr->data, visited);
+    void SpanningTreeUtil(int v, vector<bool>& visited) const { // 從 v 出發，把所有能走到的點一路走到底，並且在走訪過程中輸出生成樹的邊集合
+        visited[v] = true; // 標記已走過
+        node* curr = liss[v]; // 走訪 v 的鄰接串列，對每個鄰接點如果沒走過就把這條邊加入生成樹的邊集合，並繼續往下走
+        while (curr) { 
+            if (!visited[curr->data]) { // 如果鄰接點還沒走過，就把這條邊加入生成樹的邊集合
+                cout << "(" << v << ", " << curr->data << ") "; // 輸出生成樹的邊集合
+                SpanningTreeUtil(curr->data, visited); // 繼續往下走
             }
             curr = curr->nex;
         }
     }
 
-    // BCC Tarjan 演算法輔助函式
-    void BCCUtil(int u, int& time, vector<int>& dfn, vector<int>& low, 
-                 vector<int>& parent, stack<pair<int, int>>& st) const {
+    // BCC Tarjan 演算法輔助函式 
+    void BCCUtil(int u, int& time, vector<int>& dfn, vector<int>& low,  
+                 vector<int>& parent, stack<pair<int, int>>& st) const { // 以 u 為起點進行 DFS，並計算 dfn 和 low 值
         dfn[u] = low[u] = ++time;
         int children = 0;
         node* curr = liss[u];
@@ -203,7 +204,7 @@ public:
     
     ~AdjacencyList() override {
         for (node* head : liss) {
-            while (head) {
+            while (head) { // 釋放每個頂點的鄰接串列記憶體
                 node* temp = head;
                 head = head->nex;
                 delete temp;
@@ -287,9 +288,9 @@ public:
 
     // --- 擴充功能實作 ---
     
-    // 1. Depth First Search (DFS)
-    void DFS(int startVertex) const {
-        if (startVertex < 0 || startVertex >= liss.size()) return;
+    // 1. Depth First Search (DFS) 
+    void DFS(int startVertex) const { 
+        if (startVertex < 0 || startVertex >= liss.size()) return; // 確保起始頂點存在於圖中
         vector<bool> visited(liss.size(), false);
         cout << "DFS 走訪順序: ";
         DFSUtil(startVertex, visited);
@@ -297,8 +298,8 @@ public:
     }
 
     // 2. Breadth First Search (BFS)
-    void BFS(int startVertex) const {
-        if (startVertex < 0 || startVertex >= liss.size()) return;
+    void BFS(int startVertex) const { 
+        if (startVertex < 0 || startVertex >= liss.size()) return; // 確保起始頂點存在於圖中
         vector<bool> visited(liss.size(), false);
         queue<int> q;
 
@@ -346,7 +347,7 @@ public:
         cout << endl;
     }
 
-    // 5. Biconnected Components (BCC)
+    // 5. Biconnected Components 邊雙連通元件
     void BiconnectedComponents() const {
         int V = liss.size();
         vector<int> dfn(V, 0), low(V, 0), parent(V, -1);
@@ -413,23 +414,24 @@ public:
 
     void InsertVertex(int v) override {
         if (v >= head.size()) {
-            head.resize(v + 1, nullptr);
+            head.resize(v + 1, nullptr); // 為新頂點分配一個新的鏈表頭指標，並初始化為 nullptr
             n++;
         }
     }
 
     void InsertEdge(int u, int v, int cost = 1) override { // 修正：符合基底類別參數
-        if (u >= head.size() || v >= head.size()) return;
-        
+        if (u >= head.size() || v >= head.size()) return; // 確保 u 和 v 都存在於圖中
+        if (ExistsEdge(u, v)) return; // 避免重複插入同一條邊
+
         Edge* newEdge = new Edge(u, v);
-        newEdge->path1 = head[u];
+        newEdge->path1 = head[u]; //
         head[u] = newEdge;
         newEdge->path2 = head[v];
         head[v] = newEdge;
         e++;
     }
 
-    bool ExistsEdge(int u, int v) const override {
+    bool ExistsEdge(int u, int v) const override { // 檢查是否存在從 u 到 v 的邊
         if (u >= head.size()) return false;
         Edge* curr = head[u];
         while (curr != nullptr) {
