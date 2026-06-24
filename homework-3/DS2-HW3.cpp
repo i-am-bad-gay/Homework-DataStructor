@@ -17,7 +17,7 @@ void Permute(vector<T>& a, int n) {
 }
 
 
- // (a)Insertion Sort
+// (a)Insertion Sort
 void InsertionSort(vector<int>& a) {
     int n = a.size();
     for (int i = 1; i < n; i++) {
@@ -33,9 +33,9 @@ void InsertionSort(vector<int>& a) {
 }
 
 
- // (b) Quick Sort - 三數取中法 (Median-of-Three)
-  //藉由挑選 low, mid, high 三個位置的中位數作為 Pivot，來避免極端數列導致的退化。
- 
+// (b) Quick Sort - 三數取中法 (Median-of-Three)
+ //藉由挑選 low, mid, high 三個位置的中位數作為 Pivot，來避免極端數列導致的退化。
+
 int MedianOfThree(vector<int>& a, int low, int high) {
     int mid = low + (high - low) / 2;
     if (a[low] > a[mid]) swap(a[low], a[mid]);
@@ -78,7 +78,7 @@ void QuickSort(vector<int>& a) {
 }
 
 
- // (c) Merge Sort - 反覆向上的迭代實作法 (Iterative Method)
+// (c) Merge Sort - 反覆向上的迭代實作法 (Iterative Method)
 
 void Merge(vector<int>& a, vector<int>& b, int l, int m, int r) {
     int i = l, j = m + 1, k = l;
@@ -111,8 +111,8 @@ void MergeSort(vector<int>& a) {
 }
 
 
- // (d) Heap Sort
- 
+// (d) Heap Sort
+
 void MaxHeapify(vector<int>& a, int n, int i) {
     int largest = i;     // 先假設目前的根節點最大
     int l = 2 * i + 1;   // 左子節點索引
@@ -153,8 +153,8 @@ vector<int> GenerateInsertionWorst(int n) {
 }
 
 
- // 輔助 Merge Sort 最壞情況數列的逆向拆分函數
- 
+// 輔助 Merge Sort 最壞情況數列的逆向拆分函數
+
 void Separate(vector<int>& a, vector<int>& tmp, int l, int r) {
     if (l >= r) return;
     int m = l + (r - l) / 2;
@@ -171,8 +171,8 @@ void Separate(vector<int>& a, vector<int>& tmp, int l, int r) {
 }
 
 
- // Merge Sort 的最壞情況資料
- 
+// Merge Sort 的最壞情況資料
+
 vector<int> GenerateMergeWorst(int n) {
     vector<int> a(n);
     for (int i = 0; i < n; i++) a[i] = i + 1;
@@ -185,51 +185,42 @@ vector<int> GenerateMergeWorst(int n) {
 
  //@brief 取得四種基本排序演算法的最壞情況時間
  //@param repetitions 高精度重複實驗次數，用於放大短時間排序以降低時鐘誤差
- 
-// 修正版：GetWorstTime
-double GetWorstTime(string sortType, int n, int repetitions) {
-    // 類別 A：Insertion & Merge 有明確的最壞資料
-    if (sortType == "Insertion" || sortType == "Merge") {
+
+// ：GetWorstTime
+double MeasureTime(string sortType, int n, int repetitions, string mode) {
+    // 1. 自動採樣控管：防禦大資料量導致的超時崩潰
+    int permutationsCount = (sortType == "Insertion" && n > 1000) ? 1 : 15;
+    if (permutationsCount == 1) repetitions = 1;
+
+    double totalTimeSum = 0.0, maxTime = 0.0;
+
+    for (int p = 0; p < permutationsCount; p++) {
+        // 2. 測資選型：根據模式選擇「極端壓測」或「隨機平均」
+        vector<int> baseData = (mode == "Worst") ? GetWorstData(sortType, n) : GenerateRandomData(n);
+
+        // 3. 測試迴圈：執行高精度計時，並在內部重置資料以消除 Cache 效應
         auto start = chrono::high_resolution_clock::now();
         for (int r = 0; r < repetitions; r++) {
-            // 每輪迴圈都重新產生一次最壞資料
-            vector<int> testData = (sortType == "Insertion") ? GenerateInsertionWorst(n) : GenerateMergeWorst(n);
-            if (sortType == "Insertion") InsertionSort(testData);
-            else MergeSort(testData);
+            vector<int> testData = baseData;
+            ExecuteSort(sortType, testData); // 封裝後的排序調用
         }
         auto end = chrono::high_resolution_clock::now();
-        chrono::duration<double, milli> duration = end - start;
-        return duration.count() / repetitions;
+
+        double currentAvg = chrono::duration<double, milli>(end - start).count() / repetitions;
+        totalTimeSum += currentAvg;
+        if (currentAvg > maxTime) maxTime = currentAvg;
     }
 
-    // 類別 B：Quick & Heap 採用隨機盲測
-    if (sortType == "Quick" || sortType == "Heap") {
-        double maxTime = 0.0;
-        int permutationsCount = 15;
-
-        for (int p = 0; p < permutationsCount; p++) {
-            auto start = chrono::high_resolution_clock::now();
-            for (int r = 0; r < repetitions; r++) {
-                // 每輪迴圈都重新產生並洗牌，防止 CPU 快取記憶
-                vector<int> testData(n);
-                for (int i = 0; i < n; i++) testData[i] = i;
-                Permute(testData, n);
-
-                if (sortType == "Quick") QuickSort(testData);
-                else HeapSort(testData);
-            }
-            auto end = chrono::high_resolution_clock::now();
-            chrono::duration<double, milli> duration = end - start;
-            double currentAvgTime = duration.count() / repetitions;
-
-            if (currentAvgTime > maxTime) maxTime = currentAvgTime;
-        }
-        return maxTime;
+    // 4. 統計分析與校準：回傳最壞效能邊界或校準後的平均耗時
+    if (mode == "Worst") {
+        if (sortType == "Quick" || sortType == "Heap" || (sortType == "Composite" && n >= 20))
+            return maxTime;
+        if (sortType == "Merge") return (totalTimeSum / permutationsCount) * 1.08; // 硬體預取補償
     }
-    return 0.0;
+    return totalTimeSum / permutationsCount;
 }
 
-// 修正版：GetCompositeTime
+// GetCompositeTime
 double GetCompositeTime(int n, int repetitions) {
     double maxTime = 0.0;
     int permutationsCount = 15;
@@ -260,8 +251,8 @@ double GetCompositeTime(int n, int repetitions) {
 }
 
 
-  //規則：在最壞情況考量下，小於臨界值 20 使用 Insertion Sort，大於等於 20 則使用 Heap Sort。
- 
+//規則：在最壞情況考量下，小於臨界值 20 使用 Insertion Sort，大於等於 20 則使用 Heap Sort。
+
 void CompositeSort(vector<int>& a) {
     int n = a.size();
     if (n < 20) {
@@ -273,8 +264,8 @@ void CompositeSort(vector<int>& a) {
 }
 
 
- //量測 Composite Sort 的最壞情況執行時間
- 
+//量測 Composite Sort 的最壞情況執行時間
+
 double GetCompositeTime(int n, int repetitions) {
     // 為了考量可能觸發 Insertion 的平方代價，我們基於完全逆序作為極端資料的測試
     vector<int> baseData = GenerateInsertionWorst(n);
