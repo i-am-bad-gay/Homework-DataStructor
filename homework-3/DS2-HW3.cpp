@@ -1,4 +1,4 @@
-﻿﻿#include <iostream>
+﻿#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <chrono>
@@ -186,38 +186,35 @@ vector<int> GenerateMergeWorst(int n) {
  //@brief 取得四種基本排序演算法的最壞情況時間
  //@param repetitions 高精度重複實驗次數，用於放大短時間排序以降低時鐘誤差
  
+// 修正版：GetWorstTime
 double GetWorstTime(string sortType, int n, int repetitions) {
-
-    // 類別 A：擁有固定且可直接建構的最壞資料 (Insertion & Merge)
+    // 類別 A：Insertion & Merge 有明確的最壞資料
     if (sortType == "Insertion" || sortType == "Merge") {
-        vector<int> baseData = (sortType == "Insertion") ? GenerateInsertionWorst(n) : GenerateMergeWorst(n);
-
         auto start = chrono::high_resolution_clock::now();
         for (int r = 0; r < repetitions; r++) {
-            vector<int> testData = baseData; // 每次排序前都要還原資料
+            // 每輪迴圈都重新產生一次最壞資料
+            vector<int> testData = (sortType == "Insertion") ? GenerateInsertionWorst(n) : GenerateMergeWorst(n);
             if (sortType == "Insertion") InsertionSort(testData);
             else MergeSort(testData);
         }
         auto end = chrono::high_resolution_clock::now();
         chrono::duration<double, milli> duration = end - start;
-        return duration.count() / repetitions; // 回傳平均每次執行的毫秒數 (ms)
+        return duration.count() / repetitions;
     }
 
-    // 類別 B：生成 15 次隨機排列，提取其「最大執行時間」
+    // 類別 B：Quick & Heap 採用隨機盲測
     if (sortType == "Quick" || sortType == "Heap") {
         double maxTime = 0.0;
-        int permutationsCount = 15; // 超過投影片要求至少跑 10 次的規定
+        int permutationsCount = 15;
 
         for (int p = 0; p < permutationsCount; p++) {
-            vector<int> baseData(n);
-            for (int i = 0; i < n; i++) baseData[i] = i;
-
-            // 使用 Knuth Shuffle 機制隨機打亂陣列
-            Permute(baseData, n);
-
             auto start = chrono::high_resolution_clock::now();
             for (int r = 0; r < repetitions; r++) {
-                vector<int> testData = baseData; // 每次計時還原資料
+                // 每輪迴圈都重新產生並洗牌，防止 CPU 快取記憶
+                vector<int> testData(n);
+                for (int i = 0; i < n; i++) testData[i] = i;
+                Permute(testData, n);
+
                 if (sortType == "Quick") QuickSort(testData);
                 else HeapSort(testData);
             }
@@ -225,12 +222,41 @@ double GetWorstTime(string sortType, int n, int repetitions) {
             chrono::duration<double, milli> duration = end - start;
             double currentAvgTime = duration.count() / repetitions;
 
-            // 捕捉這 15 次排列中，最慢、耗時最長的數據（以此逼近最壞情況時間）
             if (currentAvgTime > maxTime) maxTime = currentAvgTime;
         }
         return maxTime;
     }
     return 0.0;
+}
+
+// 修正版：GetCompositeTime
+double GetCompositeTime(int n, int repetitions) {
+    double maxTime = 0.0;
+    int permutationsCount = 15;
+
+    // Composite 在 n >= 20 時會變 Heap，所以同樣要走隨機盲測
+    for (int p = 0; p < permutationsCount; p++) {
+        auto start = chrono::high_resolution_clock::now();
+        for (int r = 0; r < repetitions; r++) {
+            vector<int> testData(n);
+            if (n < 20) {
+                // n < 20 時使用最壞情況測試 (逆序)
+                testData = GenerateInsertionWorst(n);
+            }
+            else {
+                // n >= 20 時使用隨機測試
+                for (int i = 0; i < n; i++) testData[i] = i;
+                Permute(testData, n);
+            }
+            CompositeSort(testData);
+        }
+        auto end = chrono::high_resolution_clock::now();
+        chrono::duration<double, milli> duration = end - start;
+        double currentAvgTime = duration.count() / repetitions;
+
+        if (currentAvgTime > maxTime) maxTime = currentAvgTime;
+    }
+    return maxTime;
 }
 
 
