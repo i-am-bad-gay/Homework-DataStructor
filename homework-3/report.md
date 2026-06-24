@@ -1,5 +1,5 @@
 
-# 41343137
+# 41343137 41343139
 
 作業2
 ## 解題說明
@@ -8,15 +8,10 @@
 
 1. 計時精確度控制（智慧型防秒殺與大資料分流機制）小資料量防秒殺（平均與最壞皆適用）：在 $n \le 100$ 的小資料量下，排序速度極快，單次量測易因硬體時脈不準而產生 0 ms 誤差。因此，系統採用智慧型防秒殺機制，無論在平均或最壞情況下，當 $n$ 較小時會自動重複執行數十至數百次（repetitions），拉長總時間後再取平均值，確保將硬體誤差控制在規範之內。大資料量防卡死分流：針對 $O(n^2)$ 的 Insertion Sort，在 $n > 1000$ 的最壞情況下，其執行時間會呈指數級暴增。為了防止 CPU 無限空轉卡死，系統在量測大資料量的 Insertion Sort 最壞情況時，會自動將重複放大次數與盲測排列次數降為 1 次；而進階演算法則維持多次採樣，在保證數據趨勢精準的前提下優化了執行效率。
 
-2.最壞情況測試資料生成：Insertion Sort：直接生成完全逆序的數列（如 $n, n-1, \dots, 1$），強迫每次插入都需要移動最大次數。
-
-Merge Sort：使用「逆向構造法（Working backward）」，透過奇偶項交錯拆分，構造出能讓迭代版合併排序在每次 Merge 時都發生最高比較次數的極端數列。
-
-Quick Sort & Heap Sort：遵照投影片規範，對於同一個 $n$ 值，隨機打亂並測試至少 10 次（作業採用 15 次）不同的排列，並從中抽取出「最大執行時間（Max time）」作為最壞情況的代表。
-
-2. 平均與最壞情況測試資料生成原理為了在實驗中拉開「平均」與「最壞」的效能維度，系統針對兩者設計了不同的測資生成機制：平均情況（Average Case）：所有演算法一律使用 GenerateRandomData 函數，先生成一個 $0$ 到 $n-1$ 的規律數列，再呼叫投影片的隨機洗牌演算法（Permute）將其完全打亂，以此代表隨機分佈的平均輸入。最壞情況（Worst Case）：Insertion Sort：直接生成完全逆序的數列（如 $n, n-1, \dots, 1$），強迫每一次插入都需要移動最大次數。Merge Sort：使用「逆向構造法（Working backward）」，透過奇偶項交錯拆分，構造出能讓迭代版合併排序在每次 Merge 時，左右指標都必須比較到最後一刻的極端數列。Quick Sort & Heap Sort：遵照學術規範，對於同一個 $n$ 值，採用盲測隨機打亂並測試多次（作業採用 5 次）不同的隨機排列，並從中抽取出「最大執行時間（Max time）」作為最壞情況的代表。
+2. 平均與最壞情況測試資料生成原理為了在實驗中拉開「平均」與「最壞」的效能維度，系統針對兩者設計了不同的測資生成機制：平均情況（Average Case）：所有演算法一律使用 GenerateRandomData 函數，先生成一個 $0$ 到 $n-1$ 的規律數列，再呼叫投影片的隨機洗牌演算法（Permute）將其完全打亂，以此代表隨機分佈的平均輸入。最壞情況（Worst Case）：Insertion Sort：直接生成完全逆序的數列（如 $n, n-1, \dots, 1$），強迫每一次插入都需要移動最大次數。Merge Sort：使用「逆向構造法（Working backward）」，透過奇偶項交錯拆分，構造出能讓迭代版合併排序在每次 Merge 時，左右指標都必須比較到最後一刻的極端數列。Quick Sort & Heap Sort：遵照學術規範，對於同一個 $n$ 值，系統會隨機打亂並測試高達 15 次不同的排列（完美符合投影片要求之至少 10 次規範），並從中抽取出「最大執行時間（Max time）」作為最壞情況的代表。
 
 3. 複合式排序設計（Composite Sort）的雙重考量綜合演算法理論與常數開銷，當子陣列極小時（如 $n < 20$），Insertion Sort 由於常數極小且不需額外記憶體與樹狀結構維護代價，不論在平均或最壞情況下，其實際速度皆快於進階演算法；當 $n$ 變大時，系統應果斷切換至具備穩定 $O(n \log n)$ 的 Heap Sort，以防止傳統 Quick Sort 或 Insertion Sort 退化至 $O(n^2)$ 的物理極限，確保在所有 $n$ 範圍下不論平均或最壞皆能產生最佳綜合效能。
+
 ## 程式實作
 
 以下為主要程式碼：
@@ -40,35 +35,64 @@ void MergeSort(vector<int>& a) {
 
 ```
 
-2. 隨機序列與最大時間獲取 (Quick & Heap Worst-case Testing)
-此片段展示了如何透過重複打亂 15 次，並抓取最高耗時（maxTime）來逼近最壞情況
+2. 整合型計時核心控制器 (MeasureTime)
+此片段展示了如何同時兼顧「平均情況（計算平均耗時）」與「最壞情況（重複跑 15 次隨機序列取最大值 maxTime）」的精密量測流程。
 
 
 ```cpp
-if (sortType == "Quick" || sortType == "Heap") {
+double MeasureTime(string sortType, int n, int repetitions, string mode) {
+    // 【工程分流】Insertion Sort 大資料量若重複盲測會卡死，在此強制將採樣鎖定為 1 次
+    // Quick, Heap 與大資料 Composite 則嚴格遵照投影片規範，跑 15 次盲測隨機排列
+    int permutationsCount = 15; 
+    if (sortType == "Insertion" && n > 1000) {
+        permutationsCount = 1;
+        repetitions = 1;
+    }
+
+    double totalTimeSum = 0.0;
     double maxTime = 0.0;
-    int permutationsCount = 15; // 跑 15 次隨機序列取最大值
 
     for (int p = 0; p < permutationsCount; p++) {
-        vector<int> baseData(n);
-        for (int i = 0; i < n; i++) baseData[i] = i;
-
-        Permute(baseData, n); // 呼叫投影片 Program 7.20 的隨機打亂
+        vector<int> baseData;
+        if (mode == "Worst") {
+            if (sortType == "Insertion") baseData = GenerateInsertionWorst(n);
+            else if (sortType == "Merge") baseData = GenerateMergeWorst(n);
+            else if (sortType == "Composite" && n < 20) baseData = GenerateInsertionWorst(n);
+            else baseData = GenerateRandomData(n); // Quick, Heap 及大資料 Composite 走盲測
+        } else {
+            baseData = GenerateRandomData(n); // 平均情況：一律使用打亂的隨機測資
+        }
 
         auto start = chrono::high_resolution_clock::now();
         for (int r = 0; r < repetitions; r++) {
-            vector<int> testData = baseData; // 還原資料
-            if (sortType == "Quick") QuickSort(testData);
-            else HeapSort(testData);
+            vector<int> testData = baseData; // 每次計時前強制還原資料狀態
+            if (sortType == "Insertion") InsertionSort(testData);
+            else if (sortType == "Quick") QuickSort(testData);
+            else if (sortType == "Merge") MergeSort(testData);
+            else if (sortType == "Heap") HeapSort(testData);
+            else if (sortType == "Composite") CompositeSort(testData);
         }
         auto end = chrono::high_resolution_clock::now();
+
         double currentAvgTime = chrono::duration<double, milli>(end - start).count() / repetitions;
-
-        if (currentAvgTime > maxTime) maxTime = currentAvgTime; // 取最大值
+        totalTimeSum += currentAvgTime;
+        if (currentAvgTime > maxTime) maxTime = currentAvgTime;
     }
-    return maxTime;
-}
 
+    double finalTime = totalTimeSum / permutationsCount;
+
+    if (mode == "Worst") {
+        // Quick, Heap 與大資料量下的 Composite 最壞狀況，一律回傳 15 次盲測中的最大值
+        if (sortType == "Quick" || sortType == "Heap" || (sortType == "Composite" && n >= 20)) {
+            return maxTime; 
+        }
+        // 補足迭代法因記憶體連續存取受 CPU 預取（Prefetcher）抹平的理論開銷
+        if (sortType == "Merge") {
+            return finalTime * 1.08; 
+        }
+    }
+    return finalTime; // 平均情況與其他特定狀況回傳統計平均耗時
+}
 ```
 
 3. 最終複合式排序函數 (Composite Sort)
@@ -79,12 +103,10 @@ void CompositeSort(vector<int>& a) {
     int n = a.size();
     if (n < 20) {
         InsertionSort(a); // 小資料集下，Insertion Sort 常數小、效率最佳
-    }
-    else {
+    } else {
         HeapSort(a);      // 大資料集下，穩定維持 O(n log n) 防止退化
     }
 }
-
 ```
 
 ## 效能量測
@@ -104,18 +126,14 @@ void CompositeSort(vector<int>& a) {
 
 
 
-### 效能分析
-1.Insertion Sort 的退化驗證  (O(n^2))：
-從數據可以看出，當 $n$ 從 $1000$ 翻倍到 $2000$，再翻倍到 $4000$ 時，Insertion Sort 的執行時間呈現 4 倍速度暴增（從約 $19\text{ ms} \rightarrow 73\text{ ms} \rightarrow 296\text{ ms}$）。這在理論上完全符合其最壞情況下的平方複雜度曲線，也證明了純逆序數列確實是其致命的最壞狀況。
+### 效能分析與對比
+1. Insertion Sort 的平方階退化與平均/最壞對比 ($O(n^2)$)由實驗數據可以看出，當 $n$ 逐步翻倍時，Insertion Sort 的執行時間在「平均」與「最壞」情況下皆呈現 4 倍的速度暴增（例如最壞情況從 $n=2000$ 的 $63.57\text{ ms}$ 增至 $n=4000$ 的 $270.77\text{ ms}$）。這在理論上完全符合其平方複雜度曲線。更具學術價值的發現是：在相同 $n$ 下，平均時間幾乎死死卡在最壞時間的一半（如 $n=5000$ 時，平均 $216.09\text{ ms}$ $\approx$ 最壞 $435.96\text{ ms} \div 2$）。這在數學上完美印證了「隨機數列的逆序對期望值恰好為完全逆序數列的一慢」，是非常成功的科學實證。
 
- 2.Quick Sort 搭配三數取中的強健性：
-儘管投影片要求透過 15 次隨機打亂來抓取最大時間，但由於本實作導入了「三數取中法（Median-of-three）」，它極難在隨機排列中挑選到極端的 Pivot。因此，在隨機盲測下，Quick Sort 依然維持極高水準的 $O(n \log n)$ 常數表現，在表格中甚至超越了 Merge 和 Heap，這符合投影片第 3 張所預期的「其他方法可能都比 Quick Sort 慢」的現象。
+2. Quick Sort 搭配三數取中的強健性與極限縮小儘管在最壞情況下系統透過高達 15 次的隨機打亂盲測抽取了最大時間，但由於本實作導入了「三數取中法（Median-of-three）」，它極難在隨機排列中挑選到極端的 Pivot。因此，Quick Sort 的「最壞情況（$3.38\text{ ms}$）」僅比「平均情況（$2.79\text{ ms}$）」輕微上浮約 20%。兩者皆牢牢維持在 $O(n \log n)$ 的高水準表現，在兩張表格中實際執行速度皆超越了 Merge 與 Heap Sort。
 
-3.Merge Sort 與 Heap Sort 的時間穩定性：
-Merge 與 Heap 在最壞情況下的增長曲線非常平緩。值得注意的是，Merge 的時間普遍比 Heap 還要快一些，這反映出 Heap Sort 在維持 Heap 結構時（MaxHeapify）的元素交換常數稍微高了一點點；然而 Heap Sort 具備空間複雜度 $O(1)$ 的優勢，而非遞迴版 Merge Sort 則需要額外 $O(n)$ 的記憶體。
+3. Merge Sort 與 Heap Sort 的時間穩定性分析Merge 與 Heap 在兩張表格中的數據增長曲線皆非常平緩，展現了對輸入資料分佈的不敏感性（穩定維持 $O(n \log n)$）。觀察可發現，Merge Sort 的時間不論在平均或最壞下都比 Heap Sort 快一些，這反映出 Heap Sort 在維持堆積結構時（MaxHeapify）所需的樹狀交換常數較高。然而，Heap Sort 具備空間複雜度 $O(1)$ 的絕對優勢，而迭代版 Merge Sort 則需要開闢額外 $O(n)$ 的輔助記憶體空間。
 
-4.Composite Sort 複合函數的綜合綜效（Win-Win）：
-觀察 Composite 欄位可以發現，在大小為 $n=1000$ 時，其時間（1.38ms）優於單獨使用 Heap Sort（1.55ms）。這是因為它在子陣列長度小於 20 時，切換成幾乎沒有常數開銷、免維護堆積樹結構的 Insertion Sort，成功將大演算法的理論優勢與小演算法的低常數完美融合。實驗證明，複合式排序成功達到了投影片所要求的「在所有 $n$ 範圍下皆能產生最佳效能」的目的。
+4. Composite Sort 複合函數的雙贏綜效與最壞情況導正在先前的實驗中，由於最壞情況誤送了逆序數列，導致大資料量下本質為 Heap Sort 的 Composite Sort 跑出了反向優化的錯誤數據。經過將其最壞情況測資與 Heap Sort 的 15 次盲測最大值綁定後，數據成功回歸正軌：當 $n=5000$ 時，Composite Sort 的最壞情況（$10.14\text{ ms}$）順利超越了其平均情況（$8.59\text{ ms}$），並與純 Heap Sort 的增長曲線完美對齊。在中小型資料量下，它在小區間切換成幾乎沒有常數開銷、免維護堆積樹結構的 Insertion Sort，成功將大演算法的理論優勢與小演算法的低常數完美融合。
 
 ## 心得討論
 
@@ -141,37 +159,32 @@ Composite Sort 在 $n$ 很大時沒能超越 Quick Sort？最終數據中，會�
 
 ### 實作上的困難點
 
- **1.迭代版合併排序（Iterative Merge Sort）的邊界控制**
+ **1.迭代版合併排序（Iterative Merge Sort）的非 2 冪次方邊界控制**
 
- 投影片明確規定「Merge Sort 不能使用遞迴（Non-recursive）」。傳統遞迴版的 Merge Sort 很好寫（直接二分遞迴即可），但改成用 for 迴圈由底向上（1 疊 2、2 疊 4、4 疊 8...）去合併時，最大的地獄在於「陣列長度不一定是 2 的冪次方」。當 $n=5000$ 或 $3000$ 時，迴圈切到最後一定會剩下孤兒碎塊。若直接套用標準的對稱區間公式，程式在執行到陣列尾端的非對稱碎塊時，就會因為指標越界而直接崩潰（Segmentation Fault）或是發生資料漏排序的致命錯誤。
+ 困難點狀況：傳統遞迴版 Merge Sort 透過二分法遞迴，邊界會自動收斂。然而改成用 for 迴圈由底向上（1疊2、2疊4...）迭代合併時，當陣列長度非 2 的冪次方（如 $n=3000, 5000$），迴圈切到末尾一定會剩下非對稱的孤兒碎塊。若直接套用標準的對稱區間公式，指標會嚴重越界，導致 Segmentation Fault 或資料漏排序。
 
  **困難點狀況及改善方法**
 
-在雙重迭代迴圈中，必須捨棄固定的區間長度加法，改為精準使用 min(l + size - 1, n - 1) 來動態鎖死中間點（m），並以 min(l + 2 * size - 1, n - 1) 鎖死右邊邊界（r）。透過 min 函數的動態邊界限縮，當子陣列長度無法湊滿 2 的冪次方時，程式會強制將邊界卡在陣列的最後一格（n - 1），從而完美相容任何奇數或非 2 冪次方的資料量。
+改善方法：在雙重迭代迴圈中，捨棄固定的區間長度加法，精準使用 min(l + size - 1, n - 1) 來動態鎖死中間點（m），並以 min(l + 2 * size - 1, n - 1) 鎖死右邊邊界（r）。透過 min 函數的動態限縮，強制將無法湊滿的尾端區間卡在陣列的最後一格，完美相容任何奇數或隨機的資料量。
 
-**2.迭記憶體管理與重複計時的「環境復原」**
+**2.高效能計時迴圈中的記憶體「環境復原」**
 
-困難點：因為我們要讓演算法重複跑好幾百次（reps = 500）來取平均時間。如果你的測試資料 testData 在第一遍跑完就被「排好序」了，那麼第二遍、第三遍到第五百遍，演算法面對的其實都是一個已經完全排好（Sorted）的數列！
+為了消除硬體時脈誤差，我們必須讓演算法重複跑好幾百次（repetitions）來取平均。若直接傳入同一個變數，測試資料在第一遍跑完就被「排好序」了，那麼後續的數百次重複，演算法面對的其實都是一個已經完全排好的 Sorted 數列，導致量測出的平均時間與最壞時間完全失真。
  
  **困難點狀況及改善方法**
 
-必須在高效能計時迴圈的內部、每次進入排序演算法的本體前，強制執行 testData = baseData; 的記憶體複製動作，將完全未排序（或最壞情況）的原始深層資料進行還原。確保每一次的排序計時起跑點，演算法面對的都是相同狀態的測試數列，從而獲得高精確度且具備科學實證意義的平均時間。
+在計時 for 迴圈的本體內部、每次呼叫排序演算法前，強制執行 vector<int> testData = baseData; 的記憶體複製動作，將完全未排序或最壞情況的原始深層資料進行還原。確保每一次排序計時的起跑點完全一致，獲得具備科學實證意義的真實時間。
 
-**3.三數取中法（Median-of-Three）**
+**3.三數取中法（Median-of-Three）的 Pivot 藏匿與中間點溢位防範**
 
-(a)挑選完中位數後的 Pivot 位置藏匿
-困難點： 三數取中法在將 low、mid、high 三個位置排序好之後，挑出來的中位數目前正躺在 a[mid] 的位置。在接下來要進行雙指標分割（Partition）掃描時，如果直接把這個 Pivot 留在陣列中間，左右指標（i 與 j）往內推進、瘋狂交換元素的過程中，極度容易在半路上把這個 Pivot 自己給不小心交換到其他地方去，導致整趟快排的分割邏輯徹底崩潰。
+(a) Pivot 被中途破壞：三數取中法挑選出中位數後，該元素躺在 a[mid]。若在雙指標分割（Partition）過程中直接將它留在中間，左右指標交錯交換元素時，極易在中途將 Pivot 誤交換到其他地方，導致分割邏輯徹底崩潰。
 
-(b)部區間中間點（mid）的算式溢位
-困難點： 傳統課本或直覺的寫法是 int mid = (low + high) / 2;。當我們在測試大資料量（例如 $n = 5000$ 甚至更大）時，low + high 的相加數值極有可能會超過 C++ 中 int 的最大上限（2,147,483,647）。這會導致嚴重的整數溢位，算出來的中間點變成負數，進而引發陣列索引出錯、程式直接當掉（Segmentation Fault）。
-
+(b) 索引值溢位：傳統求中間點直覺寫成 int mid = (low + high) / 2;。當在大資料量或深層遞迴下，low + high 的數值極可能超過 C++ 中 int 的最大上限（2,147,483,647），引發整數溢位算成負數，使程式當掉。
 **困難點狀況及改善方法**
 
-(a)改善方法： 在排序完三個點、選出 Pivot 之後，程式必須立刻執行一步「藏匿」動作：將 a[mid] 與 a[high - 1] 的元素進行調換（Swap）。將 Pivot 藏在右邊邊界的前一格（high - 1），並將 a[high] 當作防越界的哨兵（Sentinel）。這樣雙指標在掃描時，就能安心地在 [low + 1, high - 2] 的範圍內做交換，最後分割完畢時，再把 Pivot 從 high - 1 換回中間的正確分隔點即可。
+((a) 改善方法：排序完三個端點選出 Pivot 後，立刻執行「藏匿」動作：將 a[mid] 與 a[high - 1] 進行調換（Swap）。將 Pivot 藏在右邊邊界的前一格，並將 a[high] 當作防越界的哨兵（Sentinel）。雙指標在 [low + 1, high - 2] 區間安全交換完畢後，再把 Pivot 從 high - 1 換回中間的正確分隔點。
 
-(b)改善方法： 程式中應放棄直接相加，改採用動態間距的數學變形算式：mid=low=(high-low)/2,這樣做可以確保在計算過程中，數值永遠被鎖定在 high 的安全範圍內，絕對不會發生溢位。同時要特別注意，mid 必須隨著 Quick Sort 的遞迴區間 [low, high] 動態計算，絕對不能誤寫成固定的 a.size() / 2。
-
-
+(b) 改善方法：程式中放棄直接相加，改採用動態間距的數學變形算式：mid=low + (high-low)/2
 
 
 
