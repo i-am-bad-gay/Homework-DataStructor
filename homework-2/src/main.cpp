@@ -412,6 +412,9 @@ public:
         head.assign(n, nullptr);
     }
 
+    
+
+
     void InsertVertex(int v) override {
         if (v >= head.size()) {
             head.resize(v + 1, nullptr); // 為新頂點分配一個新的鏈表頭指標，並初始化為 nullptr
@@ -419,13 +422,13 @@ public:
         }
     }
 
-    void InsertEdge(int u, int v, int cost = 1) override { // 修正：符合基底類別參數
+    void InsertEdge(int u, int v, int cost = 1) override { 
         if (u >= head.size() || v >= head.size()) return; // 確保 u 和 v 都存在於圖中
         if (ExistsEdge(u, v)) return; // 避免重複插入同一條邊
 
         Edge* newEdge = new Edge(u, v);
-        newEdge->path1 = head[u]; //
-        head[u] = newEdge;
+        newEdge->path1 = head[u]; // 將新邊插入 u 的鏈表頭
+        head[u] = newEdge; 
         newEdge->path2 = head[v];
         head[v] = newEdge;
         e++;
@@ -435,7 +438,7 @@ public:
         if (u >= head.size()) return false;
         Edge* curr = head[u];
         while (curr != nullptr) {
-            if ((curr->v1 == u && curr->v2 == v) || (curr->v1 == v && curr->v2 == u)) {
+            if ((curr->v1 == u && curr->v2 == v) || (curr->v1 == v && curr->v2 == u)) { 
                 return true;
             }
             curr = (curr->v1 == u) ? curr->path1 : curr->path2;
@@ -481,7 +484,7 @@ public:
         if (v >= head.size()) return;
         Edge* curr = head[v];
         while (curr != nullptr) {
-            int peer = (curr->v1 == v) ? curr->v2 : curr->v1;
+            int peer = (curr->v1 == v) ? curr->v2 : curr->v1; 
             Edge* next = (curr->v1 == v) ? curr->path1 : curr->path2;
             DeleteEdge(v, peer); 
             curr = next;
